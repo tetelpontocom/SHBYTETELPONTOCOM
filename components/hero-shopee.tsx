@@ -3,11 +3,11 @@
 import { useState, useEffect } from "react"
 
 const heroFrames = [
-  "/images/hero-shopee-frame-1.jpg",
-  "/images/hero-shopee-frame-2.jpg",
-  "/images/hero-shopee-frame-3.jpg",
-  "/images/hero-shopee-frame-4.jpg",
-  "/images/hero-shopee-frame-5.jpg",
+  "/images/hero-shopee-frame-1.png",
+  "/images/hero-shopee-frame-2.png",
+  "/images/hero-shopee-frame-3.png",
+  "/images/hero-shopee-frame-4.png",
+  "/images/hero-shopee-frame-5.png",
 ]
 
 export default function HeroShopee() {
@@ -22,10 +22,8 @@ export default function HeroShopee() {
   }, [])
 
   return (
-    <section
-      id="hero"
-      className="w-full min-h-[85vh] md:min-h-[92vh] lg:min-h-[100vh] flex flex-col items-center justify-center relative overflow-hidden"
-    >
+    <section className="relative overflow-hidden">
+      {/* Background image carousel */}
       {heroFrames.map((frame, index) => (
         <div
           key={frame}
@@ -36,26 +34,46 @@ export default function HeroShopee() {
           <img
             src={frame || "/placeholder.svg"}
             alt={`Shopee Hero ${index + 1}`}
-            className="hero-image w-full h-full object-cover object-center md:object-[center_20%]"
+            className="hero-image w-full h-full object-cover object-center"
           />
         </div>
       ))}
 
-      <div className="absolute inset-0 bg-black/40"></div>
+      <div className="absolute inset-0 bg-black/60" />
 
-      <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight text-white mb-6">
-          Clique. Economize. Ganhe
-          <br />
-          Recompensas Exclusivas.
+      <div className="relative z-10 mx-auto max-w-6xl px-4 pt-16 pb-20 text-center">
+        <h1
+          className="text-white text-3xl md:text-5xl font-semibold leading-tight"
+          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
+        >
+          Clique, economize e ainda concorra a recompensas de verdade.
         </h1>
 
-        <p className="text-lg md:text-xl lg:text-2xl text-white/90 max-w-3xl mx-auto mb-10">
-          Aproveite as melhores ofertas da Shopee. Aqui, cada compra gera vantagens reais, bônus premium e acesso aos
-          produtos oficiais da tetelpontocom.
+        <p className="mt-4 text-white/80 text-base md:text-lg" style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}>
+          Você compra normalmente na Shopee. <br />
+          Nós apenas te damos acesso às melhores seleções, cupons e benefícios do Ecossistema TetelPontocom — sem custo
+          extra.
+        </p>
+
+        <a
+          href="https://s.shopee.com.br/8AP48CmyxJ"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-8 inline-flex items-center justify-center px-8 py-3 rounded-full bg-[#F97316] text-white font-medium text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
+        >
+          Ver Seleções na Shopee
+        </a>
+
+        <p
+          className="mt-4 text-xs md:text-sm text-white/60 max-w-xl mx-auto"
+          style={{ textShadow: "0 2px 12px rgba(0,0,0,0.6)" }}
+        >
+          Você compra normalmente pela Shopee. Nós transformamos essas compras em recompensas, sem você pagar nada a
+          mais por isso.
         </p>
       </div>
 
+      {/* Scroll indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 animate-bounce">
         <div className="w-6 h-10 rounded-full border-2 border-white/50 flex items-start justify-center p-2">
           <div className="w-1 h-3 bg-white/70 rounded-full"></div>

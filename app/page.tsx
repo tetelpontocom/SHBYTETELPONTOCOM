@@ -1,8 +1,9 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Gift, Heart, Star } from "lucide-react"
 import HeroShopee from "@/components/hero-shopee"
+import HeroCuradoria from "@/components/hero-curadoria"
+import CategoriasShopping from "@/components/categorias-shopping"
 
 declare global {
   interface Window {
@@ -11,68 +12,24 @@ declare global {
   }
 }
 
-// 🔗 PONTO ÚNICO DO SEU LINK DE AFILIADO SHOPEE
-// Troque aqui pelo link oficial da curadoria Shopee (com seu código de afiliado)
 const SHOPEE_AFFILIATE_URL = "https://shopee.com.br"
+const WHATSAPP_URL = "https://wa.me/5582999999999?text=Oi%20Tetel%2C%20vim%20da%20LP%20Shopee%20TetelPontocom."
 
-export default function LPShopee() {
+type PageProps = {
+  searchParams: { [key: string]: string | string[] | undefined }
+}
+
+export default function Page({ searchParams }: PageProps) {
   const [fromTetel, setFromTetel] = useState(false)
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Função para inicializar o Meta Pixel
-      const initFacebookPixel = () => {
-        const f = window as any
-        const b = document
-        const e = "script"
-        const v = "https://connect.facebook.net/en_US/fbevents.js"
-
-        if (f.fbq) return
-        const n: any = (f.fbq = () => {
-          n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
-        })
-        if (!f._fbq) f._fbq = n
-        n.push = n
-        n.loaded = true
-        n.version = "2.0"
-        n.queue = []
-        const t = b.createElement(e) as HTMLScriptElement
-        t.async = true
-        t.src = v
-        const s = b.getElementsByTagName(e)[0]
-        s.parentNode?.insertBefore(t, s)
-      }
-
-      initFacebookPixel()
-      window.fbq("init", "1305167264321996")
-      window.fbq("track", "PageView")
-    }
-
-    // Disparo de pageview TetelPontocom
     try {
-      window?.postMessage({ event: "tetel_pageview", page: "lp_shopee" }, "*")
-    } catch (e) {
-      console.log("Pixel não carregado ainda")
-    }
-  }, [])
-
-  const handleCTAClick = (action: string) => {
-    // Tracking de eventos
-    if (typeof window !== "undefined" && window.fbq) {
-      window.fbq("track", "Lead", { action })
-    }
-  }
-
-  useEffect(() => {
-    if (typeof window === "undefined") return
-
-    try {
-      const referrer = document.referrer || ""
-      const params = new URLSearchParams(window.location.search)
-      const origem = (params.get("origem") || "").toLowerCase()
-
-      if (referrer.includes("tetel.online") || origem.includes("tetelpontocom")) {
-        setFromTetel(true)
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href)
+        const fromParam = url.searchParams.get("from")
+        if (fromParam && fromParam.toLowerCase().includes("tetel")) {
+          setFromTetel(true)
+        }
       }
     } catch (e) {
       console.log("Não foi possível detectar origem TetelPontocom", e)
@@ -80,425 +37,206 @@ export default function LPShopee() {
   }, [])
 
   return (
-    <main className="w-full flex flex-col bg-[#0d0d0d] text-white font-sans">
-      {/* Meta Pixel noscript fallback */}
-      <noscript>
-        <img
-          height="1"
-          width="1"
-          style={{ display: "none" }}
-          src="https://www.facebook.com/tr?id=1305167264321996&ev=PageView&noscript=1"
-        />
-      </noscript>
-
-      {/* HERO CINEMATOGRÁFICA */}
+    <div className="relative w-full max-w-full overflow-x-hidden">
       <HeroShopee />
 
       {fromTetel && (
-        <header className="w-full bg-black/80 border-b border-white/10">
-          <div className="max-w-6xl mx-auto px-4 py-3 flex flex-col md:flex-row items-center justify-between gap-2 text-xs md:text-sm">
-            <span className="opacity-80">Você está em uma página do Ecossistema TetelPontocom.</span>
-            <a
-              href="https://tetelpontocom.tetel.online"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-semibold hover:underline"
-            >
-              Voltar para TetelPontocom →
-            </a>
-          </div>
+        <header className="w-full bg-gradient-to-r from-red-600 to-red-700 py-3 text-center text-white text-sm font-medium shadow-md">
+          🎁 Você veio pelo TetelPontocom! Aproveite as ofertas exclusivas abaixo.
         </header>
       )}
 
-      {/* SEÇÃO: PRODUTOS RECOMENDADOS */}
-      <section className="w-full py-14 md:py-20 bg-transparent">
-        <div className="max-w-6xl mx-auto px-6 md:px-8">
-          <h2 className="text-center text-[28px] md:text-[36px] font-semibold text-white mb-12">
-            Produtos Recomendados
-          </h2>
+      <main className="w-full flex flex-col bg-[#050607] text-white font-sans">
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: "none" }}
+            src="https://www.facebook.com/tr?id=SEU_PIXEL_ID_AQUI&ev=PageView&noscript=1"
+            alt=""
+          />
+        </noscript>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="group flex flex-col p-5 rounded-2xl bg-[#111111] border border-[#2A2A2A] hover:border-[#3D3D3D] hover:shadow-lg transition-all duration-200"
-              >
-                <div className="w-full h-40 bg-[#1A1A1A] rounded-xl mb-4 overflow-hidden flex items-center justify-center">
-                  <img
-                    src={`/produtos/produto${i}.png`}
-                    alt={`Produto ${i}`}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-                  />
-                </div>
-                <span className="text-sm md:text-base font-medium text-[#E5E7EB] group-hover:text-white transition-colors duration-200">
-                  Produto {i}
-                </span>
-                <span className="text-[#10B981] font-semibold mt-2">R$ {(19.9 * i).toFixed(2)}</span>
-                <a
-                  href={SHOPEE_AFFILIATE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => handleCTAClick(`produto_${i}`)}
-                  className="mt-4 w-full py-2 text-sm font-medium text-white bg-[#F97316] rounded-xl hover:bg-[#fb7a24] transition-colors duration-200 text-center"
-                >
-                  Ver na Shopee
-                </a>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SEÇÃO: OFERTAS DO DIA */}
-      <section className="w-full py-14 md:py-20 bg-transparent">
-        <div className="max-w-6xl mx-auto px-6 md:px-8">
-          <h2 className="text-center text-[28px] md:text-[36px] font-semibold text-white mb-12">Ofertas do Dia</h2>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {[1, 2, 3, 4].map((i) => (
-              <div
-                key={i}
-                className="group flex flex-col p-5 rounded-2xl bg-[#111111] border border-[#2A2A2A] hover:border-[#3D3D3D] hover:shadow-lg transition-all duration-200"
-              >
-                <div className="w-full h-40 bg-[#1A1A1A] rounded-xl mb-4 overflow-hidden flex items-center justify-center">
-                  <img
-                    src={`/ofertas/oferta${i}.png`}
-                    alt={`Oferta ${i}`}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-200"
-                  />
-                </div>
-                <span className="text-sm md:text-base text-[#E5E7EB] font-medium group-hover:text-white transition-colors duration-200">
-                  Oferta {i}
-                </span>
-                <span className="text-[#10B981] font-semibold mt-2">R$ {(9.9 * i).toFixed(2)}</span>
-                <button className="mt-4 w-full py-2 text-sm font-medium text-white bg-[#F97316] rounded-xl hover:bg-[#fb7a24] transition-colors duration-200">
-                  Ver na Shopee
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* BLOCO 1 - Banner Institucional TetelPontocom */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-4xl mx-auto text-center px-6">
-          <h2 className="text-[32px] md:text-[40px] font-semibold text-white leading-tight mb-6">
-            Comprar Bem Não é Sorte.
-            <br />É Curadoria.
-          </h2>
-          <p className="text-[#D1D5DB] text-lg md:text-xl leading-relaxed mb-10">
-            Na internet, qualquer um mostra "achadinho". Aqui, você encontra apenas aquilo que vale a pena. Nós
-            investimos nosso tempo analisando, escolhendo e refinando para que você invista o seu vivendo.
-          </p>
-        </div>
-      </section>
-
-      {/* BLOCO 2 - Categorias Oficiais TetelPontocom */}
-      <section className="w-full py-16 bg-transparent">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-[28px] md:text-[36px] font-semibold text-white text-center mb-4">
-            Comece pelo que Você Procura
-          </h2>
-          <p className="text-center text-[#D1D5DB] text-sm md:text-base mb-10">
-            Categorias criadas para orientar suas escolhas, não para confundir.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {[
-              { nome: "Tecnologia", link: "#" },
-              { nome: "Casa & Cozinha", link: "#" },
-              { nome: "Beleza & Cuidado", link: "#" },
-              { nome: "Roupas & Estilo", link: "#" },
-              { nome: "Acessórios", link: "#" },
-              { nome: "Promoções do Dia", link: "#" },
-              { nome: "Cupons Disponíveis", link: "#" },
-              { nome: "Mais Vendidos", link: "#" },
-            ].map((cat) => (
-              <a
-                key={cat.nome}
-                href={cat.link}
-                className="group flex flex-col items-center bg-[#111] border border-[#2A2A2A] hover:border-[#3D3D3D] rounded-2xl p-6 transition-all"
-              >
-                <div className="w-20 h-20 bg-[#1A1A1A] rounded-xl mb-4"></div>
-                <span className="text-[#E5E7EB] group-hover:text-white font-medium text-center">{cat.nome}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* BLOCO 3 - Cupons do Dia */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-[28px] md:text-[36px] font-semibold text-white mb-6">Pague Menos Pelo Mesmo Produto</h2>
-          <p className="text-[#D1D5DB] text-base md:text-lg leading-relaxed mb-10">
-            Não precisa garimpar, não precisa tentar a sorte. Os melhores descontos do dia estão reunidos aqui. Com um
-            clique, você reduz o preço — sem reduzir o valor.
-          </p>
-          <a
-            href="#"
-            className="px-8 sm:px-10 py-3 rounded-full bg-[#F97316] text-white font-medium text-sm sm:text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
-          >
-            Ver Cupons
-          </a>
-        </div>
-      </section>
-
-      {/* BLOCO 4 - Ofertas Relâmpago */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-[28px] md:text-[36px] font-semibold text-white mb-6">
-            As Maiores Baixas de Preço do Dia
-          </h2>
-          <p className="text-[#D1D5DB] text-base md:text-lg leading-relaxed mb-10">
-            Produtos que despencaram de preço nas últimas horas. Atualizados automaticamente pela Shopee — você só
-            aproveita.
-          </p>
-          <a
-            href="#"
-            className="px-8 sm:px-10 py-3 rounded-full bg-[#F97316] text-white font-medium text-sm sm:text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
-          >
-            Ver Ofertas
-          </a>
-        </div>
-      </section>
-
-      {/* BLOCO 5 - Tendências do Dia */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-5xl mx-auto px-6 text-center">
-          <h2 className="text-[28px] md:text-[36px] font-semibold text-white mb-6">O Que Está em Alta Agora</h2>
-          <p className="text-[#D1D5DB] text-base md:text-lg leading-relaxed mb-10">
-            Produtos que estão se destacando hoje. A Shopee atualiza. A TetelPontocom seleciona. Você aproveita.
-          </p>
-          <a
-            href="#"
-            className="px-8 sm:px-10 py-3 rounded-full bg-[#F97316] text-white font-medium text-sm sm:text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
-          >
-            Ver Tendências
-          </a>
-        </div>
-      </section>
-
-      {/* BLOCO 6 - CTA Institucional Premium */}
-      <section className="w-full py-24 bg-transparent">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-[30px] md:text-[40px] font-semibold text-white mb-6 leading-tight">
-            Quando Comprar Fica Simples,
-            <br />a Economia Acontece sem Esforço.
-          </h2>
-          <p className="text-[#D1D5DB] text-lg leading-relaxed mb-12">
-            Continue explorando seleções inteligentes e oportunidades reais. A TetelPontocom filtra. A Shopee entrega.
-            Você ganha.
-          </p>
-          <a
-            href="#"
-            className="px-10 py-3 rounded-full bg-[#F97316] text-white font-medium text-base hover:bg-[#fb7a24] transition-colors"
-          >
-            Explorar Agora
-          </a>
-        </div>
-      </section>
-
-      {/* BLOCO 1 - Seleção Especial TetelPontocom */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-[28px] md:text-[36px] font-semibold text-white mb-6">Seleção Especial TetelPontocom</h2>
-          <p className="text-[#D1D5DB] text-base md:text-lg leading-relaxed mb-10">
-            Uma curadoria feita à mão, com produtos selecionados para quem busca praticidade, estilo e preço justo. Tudo
-            escolhido com o cuidado e a experiência TetelPontocom.
-          </p>
-          <div className="flex justify-center">
-            <a
-              href="#"
-              className="px-8 sm:px-10 py-3 rounded-full bg-[#F97316] text-white font-medium text-sm sm:text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
-            >
-              Ver Seleção
-            </a>
-          </div>
-        </div>
-      </section>
-
-      {/* BLOCO 2 - Vantagens TetelPontocom */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-center text-[28px] md:text-[36px] font-semibold text-white mb-12">
-            Por que Comprar com Curadoria TetelPontocom?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 text-center">
-            <div>
-              <h3 className="text-white text-lg font-semibold mb-3">Seleção Inteligente</h3>
-              <p className="text-[#D1D5DB] text-sm leading-relaxed">
-                Testamos, analisamos e escolhemos produtos que realmente valem a pena — sem enrolação e sem confusão.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white text-lg font-semibold mb-3">Preço que Compensa</h3>
-              <p className="text-[#D1D5DB] text-sm leading-relaxed">
-                Escolhemos sempre o melhor equilíbrio entre custo e benefício, com ofertas reais e recomendadas.
-              </p>
-            </div>
-            <div>
-              <h3 className="text-white text-lg font-semibold mb-3">Experiência Segura</h3>
-              <p className="text-[#D1D5DB] text-sm leading-relaxed">
-                Links oficiais, produtos confiáveis, e uma navegação limpa criada no padrão TetelPontocom.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* BLOCO 3 - CTA Intermediário Premium */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-[28px] md:text-[36px] font-semibold text-white mb-6">
-            Encontre Produtos Que Fazem Sentido
-          </h2>
-          <p className="text-[#D1D5DB] text-base md:text-lg leading-relaxed mb-10">
-            Continue explorando nossas curadorias e descubra itens que realmente ajudam seu dia a dia — com segurança,
-            critério e bom gosto.
-          </p>
-          <a
-            href="#"
-            className="px-8 sm:px-10 py-3 rounded-full bg-[#F97316] text-white font-medium text-sm sm:text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
-          >
-            Continuar Explorando
-          </a>
-        </div>
-      </section>
-
-      {/* BLOCO 4 - Depoimento Institucional TetelPontocom */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-[26px] md:text-[32px] font-semibold text-white mb-8">A Experiência Faz Diferença</h2>
-          <p className="text-[#D1D5DB] text-base md:text-lg leading-relaxed italic mb-10">
-            "A curadoria TetelPontocom não escolhe só produtos. Ela escolhe soluções. Escolhe o que realmente funciona.
-            Testado, comparado e validado com cuidado."
-          </p>
-          <p className="text-[#9CA3AF] text-sm">— TetelPontocom, Seleção Oficial</p>
-        </div>
-      </section>
-
-      {/* BLOCO 5 - Explorar Mais Categorias */}
-      <section className="w-full py-20 bg-transparent">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-[28px] md:text-[36px] font-semibold text-white mb-6">Explorar Mais Categorias</h2>
-          <p className="text-[#D1D5DB] text-base md:text-lg leading-relaxed mb-10">
-            Continue descobrindo produtos selecionados, ofertas reais e itens que combinam com o seu estilo e com o seu
-            dia a dia.
-          </p>
-          <a
-            href="#"
-            className="px-8 sm:px-10 py-3 rounded-full bg-[#F97316] text-white font-medium text-sm sm:text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
-          >
-            Ver Todas as Categorias
-          </a>
-        </div>
-      </section>
-
-      {/* SEÇÃO: RECOMPENSAS */}
-      <section
-        id="recompensas"
-        className="w-full py-20 px-6 bg-gradient-to-br from-orange-500 to-orange-600 text-black"
-      >
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-bold mb-4 text-balance">
-              Ganhe Recompensas Exclusivas tetelpontocom
-            </h2>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="p-8 bg-white rounded-2xl shadow-2xl hover:shadow-3xl transition-shadow hover:-translate-y-1 transform duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold">Até R$ 50</h3>
-                <Gift className="w-8 h-8 text-orange-500" />
-              </div>
-              <p className="text-black/70 leading-relaxed">
-                Envie o comprovante via WhatsApp e participe do sorteio de prêmios oficiais tetelpontocom.
-              </p>
-              <div className="mt-6 pt-6 border-t border-black/10">
-                <span className="text-sm font-semibold text-orange-600">SORTEIO MENSAL</span>
-              </div>
-            </div>
-            <div className="p-8 bg-white rounded-2xl shadow-2xl hover:shadow-3xl transition-shadow hover:-translate-y-1 transform duration-300 ring-4 ring-orange-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold">R$ 50 a R$ 100</h3>
-                <Star className="w-8 h-8 text-orange-500" />
-              </div>
-              <p className="text-black/70 leading-relaxed">Envie o comprovante e receba acesso ao MinhaIA Essencial.</p>
-              <div className="mt-6 pt-6 border-t border-black/10">
-                <span className="text-sm font-semibold text-orange-600">ACESSO IMEDIATO</span>
-              </div>
-            </div>
-            <div className="p-8 bg-gradient-to-br from-orange-600 to-orange-700 text-white rounded-2xl shadow-2xl hover:shadow-3xl transition-shadow hover:-translate-y-1 transform duration-300">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-2xl font-bold">Acima de R$ 100</h3>
-                <Heart className="w-8 h-8" />
-              </div>
-              <p className="leading-relaxed opacity-90">
-                Receba o MinhaIA Premium + Faça Caixa Agora totalmente grátis.
-              </p>
-              <div className="mt-6 pt-6 border-t border-white/20">
-                <span className="text-sm font-semibold">PACOTE COMPLETO VIP</span>
-              </div>
-            </div>
-          </div>
-          <div className="mt-12 text-center">
-            <p className="text-black/80 text-sm mb-4">
-              *Recompensas válidas para compras realizadas através dos links desta página
+        <section className="w-full py-16 md:py-20 bg-transparent">
+          <div className="max-w-4xl mx-auto px-6 md:px-8 text-center">
+            <h2 className="text-[26px] md:text-[34px] font-semibold mb-4">Comprar bem não é sorte. É curadoria.</h2>
+            <p className="text-base md:text-lg text-white/80 leading-relaxed">
+              Na internet, qualquer um mostra &quot;achadinho&quot;. Aqui, você encontra apenas aquilo que vale a pena.
+              Nós investimos nosso tempo analisando, escolhendo e refinando para que você invista o seu vivendo.
             </p>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* CTA FINAL */}
-      <section id="cta" className="w-full py-20 px-6 text-center bg-gradient-to-b from-[#1a1a1a] to-[#0d0d0d]">
-        <div className="max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-5xl font-bold mb-6 text-balance">
-            Compre Inteligente. Economize de Verdade.
-          </h2>
-          <p className="text-lg md:text-xl text-white/80 mb-10 leading-relaxed text-pretty">
-            Aproveite ofertas selecionadas com garantia de qualidade e receba recompensas exclusivas.
-          </p>
-          <a
-            href={SHOPEE_AFFILIATE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={() => handleCTAClick("cta_final")}
-            className="inline-block px-12 py-4 text-lg font-bold text-white bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 rounded-full shadow-2xl hover:shadow-3xl transform hover:-translate-y-1 transition-all duration-300"
-          >
-            Começar Compras Agora
-          </a>
-          <p className="mt-8 text-sm text-white/60">
-            Parceria oficial com a Shopee • Compra 100% segura • Recompensas exclusivas
-          </p>
-        </div>
-      </section>
+        <CategoriasShopping />
 
-      {/* RODAPÉ */}
-      <footer className="w-full py-12 px-6 bg-black/50 border-t border-white/10">
-        <div className="max-w-6xl mx-auto text-center">
-          <p className="text-sm text-white/60 mb-4">
-            © 2025 TetelPontocom • Curadoria Shopee • Todos os direitos reservados
-          </p>
-          <div className="flex flex-wrap justify-center gap-6 text-xs text-white/50">
-            <a href="#" className="hover:text-white/80 transition-colors">
-              Sobre
-            </a>
-            <a href="#" className="hover:text-white/80 transition-colors">
-              Como Funciona
-            </a>
-            <a href="#" className="hover:text-white/80 transition-colors">
-              Contato
-            </a>
-            <a href="#" className="hover:text-white/80 transition-colors">
-              Termos de Uso
-            </a>
-            <a href="#" className="hover:text-white/80 transition-colors">
-              Privacidade
-            </a>
+        <HeroCuradoria />
+
+        <section className="w-full py-16 bg-black overflow-x-hidden">
+          <div className="max-w-5xl mx-auto px-6">
+            <h2 className="text-2xl font-semibold text-white mb-3">Benefícios por nível de participação</h2>
+
+            <p className="text-white/70 mb-6">
+              Conforme você utiliza a curadoria TetelPontocom, novos níveis de acesso são ativados. É uma jornada de
+              clareza, progressão e experiência.
+            </p>
+
+            {/* Indicador */}
+            <div className="text-sm text-white/50 mb-3">Arraste para o lado →</div>
+
+            {/* Trilho horizontal */}
+            <div
+              className="
+                flex gap-4
+                overflow-x-auto scroll-smooth
+                snap-x snap-mandatory
+                [-webkit-overflow-scrolling:touch]
+                pb-2
+              "
+            >
+              {/* CARD 1 */}
+              <div className="snap-start shrink-0 w-[86%] max-w-[320px]">
+                <div className="bg-neutral-900 rounded-2xl p-6 shadow-md h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-orange-500/20 text-orange-400">
+                      🎁
+                    </span>
+                    <span className="text-sm text-orange-400 font-medium">NÍVEL DE ENTRADA</span>
+                  </div>
+
+                  <h3 className="text-white font-semibold mb-2">Acesso inicial ao ecossistema</h3>
+
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    Você inicia sua jornada pela curadoria, participa dos sorteios ativos e passa a comprar com mais
+                    consciência e direcionamento.
+                  </p>
+
+                  <p className="text-white/50 text-xs mt-4">Entrada consciente para quem está começando.</p>
+                </div>
+              </div>
+
+              {/* CARD 2 */}
+              <div className="snap-start shrink-0 w-[86%] max-w-[320px]">
+                <div className="bg-neutral-900 rounded-2xl p-6 shadow-md h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-yellow-500/20 text-yellow-400">
+                      ⭐
+                    </span>
+                    <span className="text-sm text-yellow-400 font-medium">NÍVEL DE ACELERAÇÃO</span>
+                  </div>
+
+                  <h3 className="text-white font-semibold mb-2">Ativação do pacote de aceleração</h3>
+
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    Você desbloqueia recursos de apoio para avançar com mais velocidade, utilizando atalhos conscientes
+                    e estrutura.
+                  </p>
+
+                  <p className="text-white/50 text-xs mt-4">Inclui Minha IA Essencial e Faça Caixa Agora.</p>
+                </div>
+              </div>
+
+              {/* CARD 3 */}
+              <div className="snap-start shrink-0 w-[86%] max-w-[320px]">
+                <div className="bg-neutral-900 rounded-2xl p-6 shadow-md h-full">
+                  <div className="flex items-center gap-3 mb-4">
+                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-500/20 text-green-400">
+                      🚀
+                    </span>
+                    <span className="text-sm text-green-400 font-medium">NÍVEL DE CONSOLIDAÇÃO</span>
+                  </div>
+
+                  <h3 className="text-white font-semibold mb-2">Consolidação de benefícios</h3>
+
+                  <p className="text-white/70 text-sm leading-relaxed">
+                    Você consolida sua posição no ecossistema e passa a acessar benefícios avançados e recorrentes.
+                  </p>
+
+                  <p className="text-white/50 text-xs mt-4">Benefícios progressivos conforme uso.</p>
+                </div>
+              </div>
+            </div>
           </div>
-        </div>
-      </footer>
-    </main>
+        </section>
+
+        <section className="w-full overflow-x-hidden">
+          <div className="w-full mx-auto px-4 flex justify-center">
+            <div className="w-full max-w-[300px] md:max-w-4xl">
+              <div className="w-full py-16 md:py-24 bg-transparent">
+                <div className="w-full text-center">
+                  <h2 className="text-[24px] md:text-[30px] font-semibold mb-4">Como funciona, na prática?</h2>
+                  <p className="text-sm md:text-base text-white/80 mb-8">
+                    Você compra normalmente pela Shopee. Depois, envia o comprovante para a TetelPontocom e participa
+                    das recompensas conforme o valor total das suas compras.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left md:text-center mb-8">
+                    <div className="w-full max-w-full bg-[#111111] border border-[#2A2A2A] rounded-2xl shadow-md overflow-hidden p-5">
+                      <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Passo 1</p>
+                      <h3 className="text-sm md:text-base font-semibold mb-2">Compre usando nossos links</h3>
+                      <p className="text-xs md:text-sm text-white/80 leading-relaxed">
+                        Sempre que for comprar na Shopee, comece por esta página. Assim, a plataforma reconhece que você
+                        veio da nossa curadoria.
+                      </p>
+                    </div>
+
+                    <div className="w-full max-w-full bg-[#111111] border border-[#2A2A2A] rounded-2xl shadow-md overflow-hidden p-5">
+                      <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Passo 2</p>
+                      <h3 className="text-sm md:text-base font-semibold mb-2">Envie o comprovante</h3>
+                      <p className="text-xs md:text-sm text-white/80 leading-relaxed">
+                        Depois que o pedido for confirmado, você tira um print da tela de comprovante ou da nota e envia
+                        para a TetelPontocom pelo WhatsApp.
+                      </p>
+                    </div>
+
+                    <div className="w-full max-w-full bg-[#111111] border border-[#2A2A2A] rounded-2xl shadow-md overflow-hidden p-5">
+                      <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Passo 3</p>
+                      <h3 className="text-sm md:text-base font-semibold mb-2">Receba suas recompensas</h3>
+                      <p className="text-xs md:text-sm text-white/80 leading-relaxed">
+                        Nós organizamos suas compras, classificamos na faixa de recompensa correspondente e liberamos o
+                        acesso aos benefícios para você.
+                      </p>
+                    </div>
+                  </div>
+
+                  <a
+                    href={WHATSAPP_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block w-full mt-6 py-3 rounded-full bg-[#22C55E] text-white text-sm font-medium text-center hover:bg-[#16a34a] transition-colors"
+                  >
+                    Enviar comprovante pelo WhatsApp
+                  </a>
+
+                  <p className="mt-4 text-xs md:text-sm text-white/60">
+                    Guarde seus comprovantes. Quanto mais você aproveitar a Shopee por aqui, mais chances tem de
+                    desbloquear benefícios dentro do Ecossistema TetelPontocom.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer className="w-full py-8 px-6 bg-black/40 text-center text-white/60 text-xs md:text-sm">
+          <p>© 2025 TetelPontocom. Todos os direitos reservados.</p>
+          <p className="mt-2 max-w-2xl mx-auto">
+            Este site não é afiliado, patrocinado ou administrado pela Shopee. As ofertas, curadorias e recompensas são
+            organizadas de forma independente pela TetelPontocom, usando os recursos públicos da plataforma.
+          </p>
+        </footer>
+      </main>
+
+      <a
+        href={WHATSAPP_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Falar no WhatsApp"
+        className="hidden md:flex fixed bottom-4 right-4 z-50 items-center justify-center w-14 h-14 rounded-full bg-[#22C55E] shadow-lg transition-transform hover:scale-105"
+      >
+        <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
+        </svg>
+      </a>
+    </div>
   )
 }
