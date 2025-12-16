@@ -9,30 +9,54 @@ declare global {
   interface Window {
     fbq: any
     _fbq: any
+    tetelEvent: any
   }
 }
 
 const SHOPEE_AFFILIATE_URL = "https://shopee.com.br"
-const WHATSAPP_URL = "https://wa.me/5582999999999?text=Oi%20Tetel%2C%20vim%20da%20LP%20Shopee%20TetelPontocom."
+const WHATSAPP_URL =
+  "https://wa.me/5582999999999?text=Ol%C3%A1%2C%20Tetel!%20%F0%9F%91%8B%0AVim%20pelo%20Ecossistema%20TetelPontocom%2C%20pela%20LP%20Shopee."
 
 type PageProps = {
   searchParams: { [key: string]: string | string[] | undefined }
+}
+
+function tetelEvent(eventName: string, params: Record<string, any> = {}) {
+  if (typeof window === "undefined") return
+
+  try {
+    if (window.fbq) {
+      window.fbq("trackCustom", eventName, {
+        ...params,
+        ecosystem: "TetelPontocom",
+        pixel_id: "1305167264321996",
+      })
+    }
+  } catch (err) {
+    console.warn("Pixel TetelPontocom não executado", err)
+  }
 }
 
 export default function Page({ searchParams }: PageProps) {
   const [fromTetel, setFromTetel] = useState(false)
 
   useEffect(() => {
-    try {
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href)
-        const fromParam = url.searchParams.get("from")
-        if (fromParam && fromParam.toLowerCase().includes("tetel")) {
-          setFromTetel(true)
-        }
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href)
+      const fromParam = url.searchParams.get("from")
+      if (fromParam && fromParam.toLowerCase().includes("tetel")) {
+        setFromTetel(true)
       }
-    } catch (e) {
-      console.log("Não foi possível detectar origem TetelPontocom", e)
+    }
+  }, [])
+
+  useEffect(() => {
+    tetelEvent("tetel_pageview")
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      ;(window as any).tetelEvent = tetelEvent
     }
   }, [])
 
@@ -52,7 +76,7 @@ export default function Page({ searchParams }: PageProps) {
             height="1"
             width="1"
             style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=SEU_PIXEL_ID_AQUI&ev=PageView&noscript=1"
+            src="https://www.facebook.com/tr?id=1305167264321996&ev=PageView&noscript=1"
             alt=""
           />
         </noscript>
@@ -202,6 +226,9 @@ export default function Page({ searchParams }: PageProps) {
                     href={WHATSAPP_URL}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={() => {
+                      tetelEvent("tetel_chase", { channel: "whatsapp" })
+                    }}
                     className="block w-full mt-6 py-3 rounded-full bg-[#22C55E] text-white text-sm font-medium text-center hover:bg-[#16a34a] transition-colors"
                   >
                     Enviar comprovante pelo WhatsApp
@@ -230,6 +257,9 @@ export default function Page({ searchParams }: PageProps) {
         href={WHATSAPP_URL}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={() => {
+          tetelEvent("tetel_chase", { channel: "whatsapp_floating" })
+        }}
         aria-label="Falar no WhatsApp"
         className="hidden md:flex fixed bottom-4 right-4 z-50 items-center justify-center w-14 h-14 rounded-full bg-[#22C55E] shadow-lg transition-transform hover:scale-105"
       >
