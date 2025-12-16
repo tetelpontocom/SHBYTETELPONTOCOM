@@ -1,3 +1,5 @@
+"use client"
+
 // CATEGORIAS — LP SHOPPING
 // TetelPontocom | Bloco de categorias visuais com imagens
 
@@ -6,33 +8,33 @@ const categorias = [
     nome: "Tecnologia & Acessórios",
     subtitulo: "com ofertas relâmpago ativas",
     imagem: "/images/lp-shopee-categoria-tecnologia-acessorios.jpg",
-    link: "https://s.shopee.com.br/7pmDgk2YOy",
+    link: "https://s.shopee.com.br/7fSo5SM4H1?sub_id1=LP_SHOPEE&sub_id2=CARD_TECNO&sub_id3=PRINCIPAL",
     ctaTexto: "Ver Ofertas Relâmpago",
-    ctaLink: "https://s.shopee.com.br/6AdzhoVzpj",
+    ctaLink: "https://s.shopee.com.br/2VkhwEdCVg?sub_id1=LP_SHOPEE&sub_id2=CARD_TECNO&sub_id3=ACELERADOR",
   },
   {
     nome: "Bem-estar & Saúde",
     subtitulo: "inclui cupons de desconto",
     imagem: "/images/lp-shopee-categoria-casa-cozinha.jpg",
-    link: "https://s.shopee.com.br/9UuRg0dl4e",
-    ctaTexto: "Ver Cupons Disponíveis",
-    ctaLink: "https://s.shopee.com.br/1LYjx9ioHG",
+    link: "https://s.shopee.com.br/10vuHeBleE?sub_id1=LP_SHOPEE&sub_id2=CARD_BEMESTAR&sub_id3=PRINCIPAL",
+    ctaTexto: "Ver Cupons",
+    ctaLink: "https://s.shopee.com.br/7KpxhvDnol?sub_id1=LP_SHOPEE&sub_id2=CARD_BEMESTAR&sub_id3=ACELERADOR",
   },
   {
-    nome: "Presentes & Ideias Criativas",
+    nome: "Mercado Shopee",
     subtitulo: "achadinhos e descobertas do dia",
-    imagem: "/images/lp-shopee-categoria-presentes.jpg",
-    link: "https://s.shopee.com.br/3qG4vpkP4v",
-    ctaTexto: "Ver Achadinhos do Dia",
-    ctaLink: "https://s.shopee.com.br/2VkhLRajVR",
+    imagem: "/images/lp-shopee-categoria-mercadoshopee.jpg",
+    link: "https://s.shopee.com.br/805ecxvo7h?sub_id1=LP_SHOPEE&sub_id2=CARD_ACHADINHOS&sub_id3=PRINCIPAL",
+    ctaTexto: "Ver Achadinhos",
+    ctaLink: "https://s.shopee.com.br/VzdhIz83J?sub_id1=LP_SHOPEE&sub_id2=CARD_ACHADINHOS&sub_id3=ACELERADOR",
   },
   {
     nome: "Volta às Aulas",
     subtitulo: "economize com cupons ativos",
     imagem: "/images/lp-shopee-categoria-volta-as-aulas.jpg",
-    link: "https://s.shopee.com.br/5fhj7KaC0U",
-    ctaTexto: "Ver Cupons Ativos",
-    ctaLink: "https://s.shopee.com.br/1gBaM4502H",
+    link: "https://s.shopee.com.br/7pmDgk2YOy?sub_id1=LP_SHOPEE&sub_id2=CARD_PAPELARIA&sub_id3=PRINCIPAL",
+    ctaTexto: "Ver Cupons",
+    ctaLink: "https://s.shopee.com.br/1BFKOYVzhM?sub_id1=LP_SHOPEE&sub_id2=CARD_PAPELARIA&sub_id3=ACELERADOR",
   },
 ]
 
@@ -53,6 +55,10 @@ export default function CategoriasShopping() {
                     rel="noopener noreferrer"
                     className="block group hover:opacity-90 transition-opacity"
                   >
+                    <div className="px-6 pt-4 pb-2">
+                      <span className="text-xs text-white/50">Abrir categoria →</span>
+                    </div>
+
                     <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black/40 flex items-center justify-center">
                       <img
                         src={cat.imagem || "/placeholder.svg"}
@@ -73,6 +79,7 @@ export default function CategoriasShopping() {
                       target="_blank"
                       rel="noopener noreferrer"
                       className="inline-flex items-center justify-center w-full px-4 py-2.5 rounded-lg bg-orange-500/10 border border-orange-500/30 text-orange-400 text-sm font-medium hover:bg-orange-500/20 hover:border-orange-500/50 transition-all"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       {cat.ctaTexto} →
                     </a>

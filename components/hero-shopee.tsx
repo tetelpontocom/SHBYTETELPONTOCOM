@@ -56,7 +56,7 @@ export default function HeroShopee() {
         </p>
 
         <a
-          href="https://s.shopee.com.br/8AP48CmyxJ"
+          href="https://s.shopee.com.br/8AP48CmyxJ?sub_id1=LP_SHOPEE&sub_id2=HERO&sub_id3=PRINCIPAL"
           target="_blank"
           rel="noopener noreferrer"
           className="mt-8 inline-flex items-center justify-center px-8 py-3 rounded-full bg-[#F97316] text-white font-medium text-base hover:bg-[#fb7a24] transition-colors whitespace-nowrap"
