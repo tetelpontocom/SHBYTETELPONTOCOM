@@ -59,7 +59,7 @@ export default function CategoriasShopping() {
                       <span className="text-xs text-white/50">Abrir categoria →</span>
                     </div>
 
-                    <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black/40 flex items-center justify-center">
+                    <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-black/40 flex md:items-center md:justify-center items-start justify-center pt-4 md:pt-0">
                       <img
                         src={cat.imagem || "/placeholder.svg"}
                         alt={cat.nome}
