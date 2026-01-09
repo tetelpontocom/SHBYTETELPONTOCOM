@@ -15,7 +15,7 @@ const { execSync } = require("child_process");
 // 👉 AJUSTE AQUI: liste os projetos que você quer varrer
 const PROJECTS = [
   // Exemplo (troque para o seu caminho real):
-  "C:/Users/Funcionário IA/Documents/GitHub/SHBYTETELPONTOCOM",
+  "C:/Users/Funcionário IA/Documents/GitHub/LP-TETELPONTOCOM-GPT.V0",
 ];
 
 const PATCHED_NEXT = {
