@@ -1,6 +1,8 @@
+"use client"
+
 // app/page.tsx
 // TetelPontocom — Curadoria Shopee (LP Curadoria)
-// Foco: tráfego -> clique -> Shopee (preservar sessão / reduzir fricção)
+// Iteração Persuasão + UX (card inteiro clicável, microcopy persuasiva, sem duplicidade "Achadinhos")
 // V0 Free Safe Mode ✅
 
 import type React from "react"
@@ -15,7 +17,7 @@ const LINKS = {
   catMercado: "https://s.shopee.com.br/805ecxvo7h",
   catPapelaria: "https://s.shopee.com.br/7pmDgk2YOy",
 
-  // Novas categorias fixas (já convertidas)
+  // Categorias fixas (já convertidas)
   catAchadinhos: "https://s.shopee.com.br/1BG7BsNCTi",
   catModa: "https://s.shopee.com.br/9fEfJrdDec",
   catClubeBeleza: "https://s.shopee.com.br/2VlUmnO0aO",
@@ -67,6 +69,14 @@ function ButtonLink({
 function MiniBadge({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-medium text-zinc-600">
+      {children}
+    </span>
+  )
+}
+
+function MicroTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-700 ring-1 ring-orange-100">
       {children}
     </span>
   )
@@ -199,39 +209,65 @@ function Icon({
   )
 }
 
+/**
+ * Card inteiro clicável:
+ * - link envolve todo o container
+ * - seta vira reforço visual (não o único clique)
+ * - sem usar onClick/window fora de useEffect (V0 Free Safe Mode)
+ */
 function CategoryCard({
   title,
   desc,
   href,
   icon,
   cta,
+  tag,
 }: {
   title: string
   desc: string
   href: string
   icon: "bolt" | "shield" | "tag" | "paper" | "sparkle" | "paw" | "shirt" | "car" | "baby" | "deal"
   cta: string
+  tag?: string
 }) {
   return (
-    <div className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+    <a
+      href={href}
+      target="_self"
+      className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md hover:-translate-y-[1px] focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2"
+      aria-label={`${title} - abrir na Shopee`}
+    >
       <div className="flex items-start gap-4">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
           <Icon name={icon} />
         </div>
-        <div className="min-w-0">
-          <h3 className="text-base font-semibold text-zinc-900">{title}</h3>
-          <p className="mt-1 text-sm text-zinc-600">{desc}</p>
 
-          <a
-            href={href}
-            target="_self"
-            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-zinc-900 hover:underline"
-          >
-            {cta} <span aria-hidden>→</span>
-          </a>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-semibold text-zinc-900">{title}</h3>
+                {tag ? <MicroTag>{tag}</MicroTag> : null}
+              </div>
+              <p className="mt-1 text-sm text-zinc-600">{desc}</p>
+            </div>
+
+            {/* seta como reforço visual */}
+            <span
+              className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition group-hover:bg-zinc-50 group-hover:text-zinc-900"
+              aria-hidden="true"
+              title="Abrir"
+            >
+              →
+            </span>
+          </div>
+
+          <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-zinc-900">
+            {cta} <span aria-hidden>↗</span>
+          </div>
         </div>
       </div>
-    </div>
+    </a>
   )
 }
 
@@ -330,86 +366,105 @@ export default function Page() {
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-semibold tracking-wide text-zinc-500">Curadoria prática</p>
           <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl">
-            Comece pelo que você procura
+            Escolha um atalho e vá direto
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-zinc-600 md:text-base">
-            Escolha uma categoria e vá direto para a Shopee. Simples e rápido.
+            Clique no card inteiro (não só na seta) e entre na Shopee pela categoria.
           </p>
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {/* Base */}
+          {/* Impulso vs Exploração (remove duplicidade "Achadinhos") */}
           <CategoryCard
-            title="Tecnologia & Acessórios"
-            desc="Eletrônicos, utilidades e itens do dia a dia."
-            href={LINKS.catTecnologia}
-            icon="bolt"
-            cta="Abrir categoria"
-          />
-          <CategoryCard
-            title="Bem-estar & Saúde"
-            desc="Esporte & fitness e achados com economia quando houver."
-            href={LINKS.catBemEstar}
-            icon="shield"
-            cta="Ver opções"
-          />
-          <CategoryCard
-            title="Mercado Shopee"
-            desc="Descobertas e achadinhos do dia (sem tranqueira)."
-            href={LINKS.catMercado}
-            icon="tag"
-            cta="Ver achadinhos"
-          />
-          <CategoryCard
-            title="Papelaria & Organização"
-            desc="Itens para estudar, planejar e manter tudo em ordem."
-            href={LINKS.catPapelaria}
-            icon="paper"
-            cta="Abrir seleção"
-          />
-
-          {/* Novas (fixas/anual) */}
-          <CategoryCard
-            title="Achadinhos"
-            desc="Garimpo de ofertas e descobertas do dia."
+            title="Achadinhos do Dia"
+            tag="Mais clicados"
+            desc="Garimpo rápido do que está valendo a pena agora (sem perder tempo)."
             href={LINKS.catAchadinhos}
             icon="deal"
-            cta="Ver achadinhos"
+            cta="Abrir achadinhos"
           />
+
+          <CategoryCard
+            title="Explorar a Shopee"
+            tag="Visão geral"
+            desc="Ofertas e categorias amplas pra navegar quando você quer procurar com calma."
+            href={LINKS.catMercado}
+            icon="tag"
+            cta="Explorar agora"
+          />
+
+          {/* Fixas/anual (microcopy persuasiva leve) */}
           <CategoryCard
             title="Moda"
-            desc="Roupas, calçados, acessórios e tendências."
+            tag="Renove sem gastar"
+            desc="Roupas, calçados e acessórios com custo-benefício e variedade."
             href={LINKS.catModa}
             icon="shirt"
             cta="Ver moda"
           />
+
           <CategoryCard
             title="Clube da Beleza"
-            desc="Skincare, cabelo, maquiagem e perfumaria."
+            tag="Custo-benefício"
+            desc="Skincare, cabelo, maquiagem e perfumaria — escolha com mais acerto."
             href={LINKS.catClubeBeleza}
             icon="sparkle"
             cta="Ver beleza"
           />
+
           <CategoryCard
             title="Clube Pet"
-            desc="Ração, acessórios, cuidados e bem-estar do pet."
+            tag="Pro seu pet"
+            desc="Ração, acessórios e cuidados — prático e direto ao que importa."
             href={LINKS.catClubePet}
             icon="paw"
             cta="Ver pet"
           />
+
+          <CategoryCard
+            title="Clube do Bebê"
+            tag="Essenciais"
+            desc="Itens úteis do bebê com praticidade — sem errar na escolha."
+            href={LINKS.catClubeBebe}
+            icon="baby"
+            cta="Ver bebê"
+          />
+
           <CategoryCard
             title="Auto e Moto"
-            desc="Acessórios, ferramentas e itens para o seu veículo."
+            tag="Resolve rápido"
+            desc="Acessórios e itens do dia a dia do veículo — útil e sem enrolação."
             href={LINKS.catAutoMoto}
             icon="car"
             cta="Ver auto e moto"
           />
+
+          {/* Bases que continuam úteis */}
           <CategoryCard
-            title="Clube do Bebê"
-            desc="Itens essenciais, cuidados e utilidades para o bebê."
-            href={LINKS.catClubeBebe}
-            icon="baby"
-            cta="Ver bebê"
+            title="Tecnologia & Acessórios"
+            tag="Úteis do dia a dia"
+            desc="Eletrônicos e utilidades — atalho pra achar o que resolve."
+            href={LINKS.catTecnologia}
+            icon="bolt"
+            cta="Abrir tecnologia"
+          />
+
+          <CategoryCard
+            title="Bem-estar & Saúde"
+            tag="Vida prática"
+            desc="Esporte & fitness e itens de cuidado — quando fizer sentido pra você."
+            href={LINKS.catBemEstar}
+            icon="shield"
+            cta="Ver bem-estar"
+          />
+
+          <CategoryCard
+            title="Papelaria & Organização"
+            tag="Organize-se"
+            desc="Itens para estudar, planejar e manter tudo em ordem."
+            href={LINKS.catPapelaria}
+            icon="paper"
+            cta="Abrir papelaria"
           />
         </div>
 
@@ -431,7 +486,7 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Rodapé enxuto */}
+      {/* Rodapé */}
       <section className="mx-auto mt-10 max-w-6xl px-4 pb-24 md:px-6 md:pb-28">
         <footer className="rounded-3xl border border-zinc-200 bg-white p-6 text-center text-xs text-zinc-500 shadow-sm">
           <div className="font-semibold text-zinc-800">TetelPontocom</div>
