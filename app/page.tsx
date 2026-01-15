@@ -1,272 +1,456 @@
-"use client"
+// app/page.tsx
+// TetelPontocom — Curadoria Shopee (LP Curadoria)
+// Foco: tráfego -> clique -> Shopee (preservar sessão / reduzir fricção)
+// V0 Free Safe Mode ✅
 
-import { useEffect, useState } from "react"
-import HeroShopee from "@/components/hero-shopee"
-import HeroCuradoria from "@/components/hero-curadoria"
-import CategoriasShopping from "@/components/categorias-shopping"
+import type React from "react"
 
-declare global {
-  interface Window {
-    fbq: any
-    _fbq: any
-    tetelEvent: any
-  }
+const LINKS = {
+  // CTAs PRINCIPAIS (sempre este link)
+  shopeeMain: "https://s.shopee.com.br/8AP48CmyxJ",
+
+  // Links base (já convertidos)
+  catTecnologia: "https://s.shopee.com.br/7fSo5SM4H1",
+  catBemEstar: "https://s.shopee.com.br/10vuHeBleE",
+  catMercado: "https://s.shopee.com.br/805ecxvo7h",
+  catPapelaria: "https://s.shopee.com.br/7pmDgk2YOy",
+
+  // Novas categorias fixas (já convertidas)
+  catAchadinhos: "https://s.shopee.com.br/1BG7BsNCTi",
+  catModa: "https://s.shopee.com.br/9fEfJrdDec",
+  catClubeBeleza: "https://s.shopee.com.br/2VlUmnO0aO",
+  catClubePet: "https://s.shopee.com.br/5q1wl2qh7D",
+  catAutoMoto: "https://s.shopee.com.br/40aIZlqe0d",
+  catClubeBebe: "https://s.shopee.com.br/5fiWYwH4c4",
+
+  // WhatsApp (neutro: dúvida OU comprovante)
+  whatsapp:
+    "https://wa.me/5582999176900?text=Ol%C3%A1%21%20Vim%20pela%20curadoria%20TetelPontocom%20na%20Shopee.%0AQuero%20tirar%20uma%20d%C3%BAvida%20%2F%20enviar%20um%20comprovante.%20%F0%9F%99%82",
 }
 
-const SHOPEE_AFFILIATE_URL = "https://shopee.com.br"
-const WHATSAPP_URL =
-  "https://wa.me/5582999999999?text=Ol%C3%A1%2C%20Tetel!%20%F0%9F%91%8B%0AVim%20pelo%20Ecossistema%20TetelPontocom%2C%20pela%20LP%20Shopee."
-
-type PageProps = {
-  searchParams: { [key: string]: string | string[] | undefined }
-}
-
-function tetelEvent(eventName: string, params: Record<string, any> = {}) {
-  if (typeof window === "undefined") return
-
-  try {
-    if (window.fbq) {
-      window.fbq("trackCustom", eventName, {
-        ...params,
-        ecosystem: "TetelPontocom",
-        pixel_id: "1305167264321996",
-      })
-    }
-  } catch (err) {
-    console.warn("Pixel TetelPontocom não executado", err)
-  }
-}
-
-export default function Page({ searchParams }: PageProps) {
-  const [fromTetel, setFromTetel] = useState(false)
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const url = new URL(window.location.href)
-      const fromParam = url.searchParams.get("from")
-      if (fromParam && fromParam.toLowerCase().includes("tetel")) {
-        setFromTetel(true)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    tetelEvent("tetel_pageview")
-  }, [])
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      ;(window as any).tetelEvent = tetelEvent
-    }
-  }, [])
+// Shopee: manter mesma aba tende a reduzir quebra de sessão em mobile.
+// WhatsApp: abrir nova aba é ok (não é link de atribuição).
+function ButtonLink({
+  href,
+  children,
+  variant = "primary",
+  openInNewTab = false,
+  className = "",
+}: {
+  href: string
+  children: React.ReactNode
+  variant?: "primary" | "secondary" | "ghost"
+  openInNewTab?: boolean
+  className?: string
+}) {
+  const base =
+    "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2"
+  const styles =
+    variant === "primary"
+      ? "bg-zinc-900 text-white hover:bg-zinc-800 focus:ring-zinc-900"
+      : variant === "secondary"
+        ? "bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 focus:ring-zinc-300"
+        : "bg-transparent text-zinc-900 hover:bg-zinc-100 focus:ring-zinc-300"
 
   return (
-    <div className="relative w-full max-w-full overflow-x-hidden">
-      <HeroShopee />
+    <a
+      href={href}
+      target={openInNewTab ? "_blank" : "_self"}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
+      className={`${base} ${styles} ${className}`}
+    >
+      {children}
+    </a>
+  )
+}
 
-      {fromTetel && (
-        <header className="w-full bg-gradient-to-r from-red-600 to-red-700 py-3 text-center text-white text-sm font-medium shadow-md">
-          🎁 Você veio pelo TetelPontocom! Aproveite as ofertas exclusivas abaixo.
-        </header>
-      )}
+function MiniBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-medium text-zinc-600">
+      {children}
+    </span>
+  )
+}
 
-      <main className="w-full flex flex-col bg-[#050607] text-white font-sans">
-        <noscript>
-          <img
-            height="1"
-            width="1"
-            style={{ display: "none" }}
-            src="https://www.facebook.com/tr?id=1305167264321996&ev=PageView&noscript=1"
-            alt=""
-          />
-        </noscript>
+function Icon({
+  name,
+}: {
+  name: "bolt" | "shield" | "tag" | "paper" | "sparkle" | "paw" | "shirt" | "car" | "baby" | "deal"
+}) {
+  const common = "h-5 w-5"
 
-        <section className="w-full py-16 md:py-20 bg-transparent">
-          <div className="max-w-4xl mx-auto px-6 md:px-8 text-center">
-            <h2 className="text-[26px] md:text-[34px] font-semibold mb-4">Comprar bem não é sorte. É curadoria.</h2>
-            <p className="text-base md:text-lg text-white/80 leading-relaxed">
-              Na internet, qualquer um mostra &quot;achadinho&quot;. Aqui, você encontra apenas aquilo que vale a pena.
-              Nós investimos nosso tempo analisando, escolhendo e refinando para que você invista o seu vivendo.
-            </p>
-          </div>
-        </section>
+  if (name === "bolt")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M13 2 3 14h8l-1 8 11-14h-8l0-6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    )
 
-        <CategoriasShopping />
+  if (name === "shield")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 2 20 6v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
 
-        <HeroCuradoria />
+  if (name === "tag")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M20 13 13 20a2 2 0 0 1-2.8 0L3 12V4h8l9 9Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M7.5 7.5h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      </svg>
+    )
 
-        <section className="w-full py-16 bg-black overflow-x-hidden">
-          <div className="max-w-5xl mx-auto px-6">
-            <h2 className="text-2xl font-semibold text-white mb-3">Benefícios por nível de participação</h2>
+  if (name === "paper")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M14 3v4h4" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    )
 
-            <p className="text-white/70 mb-6">
-              Conforme você utiliza a curadoria TetelPontocom, novos níveis de acesso são ativados. É uma jornada de
-              clareza, progressão e experiência.
-            </p>
+  if (name === "sparkle")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 2l1.2 5.1L18 8.3l-4.4 2.7L12 16l-1.6-5L6 8.3l4.8-1.2L12 2Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M4 14l.7 2.1L7 17l-2.3.9L4 20l-.7-2.1L1 17l2.3-.9L4 14Z"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
 
-            {/* Indicador */}
-            <div className="text-sm text-white/50 mb-3">Arraste para o lado →</div>
+  if (name === "paw")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 14c-3 0-6 2-6 5 0 2 2 3 6 3s6-1 6-3c0-3-3-5-6-5Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M8 10c0 1-.7 2-1.6 2S5 11 5 10s.7-2 1.4-2S8 9 8 10Z" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M19 10c0 1-.7 2-1.4 2S16 11 16 10s.7-2 1.4-2S19 9 19 10Z" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M11 7c0 1-.8 2-1.7 2S7.6 8 7.6 7 8.4 5 9.3 5 11 6 11 7Z" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M16.4 7c0 1-.8 2-1.7 2S13 8 13 7s.8-2 1.7-2 1.7 1 1.7 2Z" stroke="currentColor" strokeWidth="1.4" />
+      </svg>
+    )
 
-            {/* Trilho horizontal */}
-            <div
-              className="
-                flex gap-4
-                overflow-x-auto scroll-smooth
-                snap-x snap-mandatory
-                [-webkit-overflow-scrolling:touch]
-                pb-2
-              "
-            >
-              {/* CARD 1 */}
-              <div className="snap-start shrink-0 w-[86%] max-w-[320px]">
-                <div className="bg-neutral-900 rounded-2xl p-6 shadow-md h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-orange-500/20 text-orange-400">
-                      🎁
-                    </span>
-                    <span className="text-sm text-orange-400 font-medium">NÍVEL DE ENTRADA</span>
-                  </div>
+  if (name === "shirt")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M8 4 6 6 3 7l2 5 2-1v10h10V11l2 1 2-5-3-1-2-2"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M8 4c1 2 7 2 8 0" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    )
 
-                  <h3 className="text-white font-semibold mb-2">Acesso inicial ao ecossistema</h3>
+  if (name === "car")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M5 16l1-6 2-3h8l2 3 1 6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M4 16h16v4H4v-4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M7 20v1M17 20v1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    )
 
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    Você inicia sua jornada pela curadoria, participa dos sorteios ativos e passa a comprar com mais
-                    consciência e direcionamento.
-                  </p>
+  if (name === "baby")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M12 21a8 8 0 1 0-8-8 8 8 0 0 0 8 8Z" stroke="currentColor" strokeWidth="1.6" />
+        <path d="M9.5 10.5h.01M14.5 10.5h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M9 14c1 1 2 1.5 3 1.5S14 15 15 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M12 5c1.2 0 2 .8 2 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    )
 
-                  <p className="text-white/50 text-xs mt-4">Entrada consciente para quem está começando.</p>
-                </div>
-              </div>
+  // deal
+  return (
+    <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M20 7l-8 13L4 12l3-5h13Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M7 7h13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
 
-              {/* CARD 2 */}
-              <div className="snap-start shrink-0 w-[86%] max-w-[320px]">
-                <div className="bg-neutral-900 rounded-2xl p-6 shadow-md h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-yellow-500/20 text-yellow-400">
-                      ⭐
-                    </span>
-                    <span className="text-sm text-yellow-400 font-medium">NÍVEL DE ACELERAÇÃO</span>
-                  </div>
+function CategoryCard({
+  title,
+  desc,
+  href,
+  icon,
+  cta,
+}: {
+  title: string
+  desc: string
+  href: string
+  icon: "bolt" | "shield" | "tag" | "paper" | "sparkle" | "paw" | "shirt" | "car" | "baby" | "deal"
+  cta: string
+}) {
+  return (
+    <div className="group rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md">
+      <div className="flex items-start gap-4">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
+          <Icon name={icon} />
+        </div>
+        <div className="min-w-0">
+          <h3 className="text-base font-semibold text-zinc-900">{title}</h3>
+          <p className="mt-1 text-sm text-zinc-600">{desc}</p>
 
-                  <h3 className="text-white font-semibold mb-2">Ativação do pacote de aceleração</h3>
-
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    Você desbloqueia recursos de apoio para avançar com mais velocidade, utilizando atalhos conscientes
-                    e estrutura.
-                  </p>
-
-                  <p className="text-white/50 text-xs mt-4">Inclui Minha IA Essencial e Faça Caixa Agora.</p>
-                </div>
-              </div>
-
-              {/* CARD 3 */}
-              <div className="snap-start shrink-0 w-[86%] max-w-[320px]">
-                <div className="bg-neutral-900 rounded-2xl p-6 shadow-md h-full">
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-green-500/20 text-green-400">
-                      🚀
-                    </span>
-                    <span className="text-sm text-green-400 font-medium">NÍVEL DE CONSOLIDAÇÃO</span>
-                  </div>
-
-                  <h3 className="text-white font-semibold mb-2">Consolidação de benefícios</h3>
-
-                  <p className="text-white/70 text-sm leading-relaxed">
-                    Você consolida sua posição no ecossistema e passa a acessar benefícios avançados e recorrentes.
-                  </p>
-
-                  <p className="text-white/50 text-xs mt-4">Benefícios progressivos conforme uso.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="w-full overflow-x-hidden">
-          <div className="w-full mx-auto px-4 flex justify-center">
-            <div className="w-full max-w-[300px] md:max-w-4xl">
-              <div className="w-full py-16 md:py-24 bg-transparent">
-                <div className="w-full text-center">
-                  <h2 className="text-[24px] md:text-[30px] font-semibold mb-4">Como funciona, na prática?</h2>
-                  <p className="text-sm md:text-base text-white/80 mb-8">
-                    Você compra normalmente pela Shopee. Depois, envia o comprovante para a TetelPontocom e participa
-                    das recompensas conforme o valor total das suas compras.
-                  </p>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left md:text-center mb-8">
-                    <div className="w-full max-w-full bg-[#111111] border border-[#2A2A2A] rounded-2xl shadow-md overflow-hidden p-5">
-                      <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Passo 1</p>
-                      <h3 className="text-sm md:text-base font-semibold mb-2">Compre usando nossos links</h3>
-                      <p className="text-xs md:text-sm text-white/80 leading-relaxed">
-                        Sempre que for comprar na Shopee, comece por esta página. Assim, a plataforma reconhece que você
-                        veio da nossa curadoria.
-                      </p>
-                    </div>
-
-                    <div className="w-full max-w-full bg-[#111111] border border-[#2A2A2A] rounded-2xl shadow-md overflow-hidden p-5">
-                      <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Passo 2</p>
-                      <h3 className="text-sm md:text-base font-semibold mb-2">Envie o comprovante</h3>
-                      <p className="text-xs md:text-sm text-white/80 leading-relaxed">
-                        Depois que o pedido for confirmado, você tira um print da tela de comprovante ou da nota e envia
-                        para a TetelPontocom pelo WhatsApp.
-                      </p>
-                    </div>
-
-                    <div className="w-full max-w-full bg-[#111111] border border-[#2A2A2A] rounded-2xl shadow-md overflow-hidden p-5">
-                      <p className="text-xs uppercase tracking-wide text-white/60 mb-2">Passo 3</p>
-                      <h3 className="text-sm md:text-base font-semibold mb-2">Receba suas recompensas</h3>
-                      <p className="text-xs md:text-sm text-white/80 leading-relaxed">
-                        Nós organizamos suas compras, classificamos na faixa de recompensa correspondente e liberamos o
-                        acesso aos benefícios para você.
-                      </p>
-                    </div>
-                  </div>
-
-                  <a
-                    href={WHATSAPP_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    onClick={() => {
-                      tetelEvent("tetel_chase", { channel: "whatsapp" })
-                    }}
-                    className="block w-full mt-6 py-3 rounded-full bg-[#22C55E] text-white text-sm font-medium text-center hover:bg-[#16a34a] transition-colors"
-                  >
-                    Enviar comprovante pelo WhatsApp
-                  </a>
-
-                  <p className="mt-4 text-xs md:text-sm text-white/60">
-                    Guarde seus comprovantes. Quanto mais você aproveitar a Shopee por aqui, mais chances tem de
-                    desbloquear benefícios dentro do Ecossistema TetelPontocom.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <footer className="w-full py-8 px-6 bg-black/40 text-center text-white/60 text-xs md:text-sm">
-          <p>© 2025 TetelPontocom. Todos os direitos reservados.</p>
-          <p className="mt-2 max-w-2xl mx-auto">
-            Este site não é afiliado, patrocinado ou administrado pela Shopee. As ofertas, curadorias e recompensas são
-            organizadas de forma independente pela TetelPontocom, usando os recursos públicos da plataforma.
-          </p>
-        </footer>
-      </main>
-
-      <a
-        href={WHATSAPP_URL}
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={() => {
-          tetelEvent("tetel_chase", { channel: "whatsapp_floating" })
-        }}
-        aria-label="Falar no WhatsApp"
-        className="hidden md:flex fixed bottom-4 right-4 z-50 items-center justify-center w-14 h-14 rounded-full bg-[#22C55E] shadow-lg transition-transform hover:scale-105"
-      >
-        <svg className="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z" />
-        </svg>
-      </a>
+          <a
+            href={href}
+            target="_self"
+            className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-zinc-900 hover:underline"
+          >
+            {cta} <span aria-hidden>→</span>
+          </a>
+        </div>
+      </div>
     </div>
+  )
+}
+
+export default function Page() {
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-orange-50/50 via-white to-white text-zinc-900">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/85 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
+          <div className="flex items-center gap-3">
+            <img
+              src="/images/tetelpontocom-simbolo-overlay.png"
+              alt="TetelPontocom"
+              className="h-9 w-9 object-contain"
+            />
+            <div className="leading-tight">
+              <div className="text-sm font-semibold">TetelPontocom</div>
+              <div className="text-xs text-zinc-500">Curadoria Shopee</div>
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2">
+            <ButtonLink href={LINKS.shopeeMain} variant="primary">
+              Ver seleções na Shopee
+            </ButtonLink>
+            <ButtonLink href={LINKS.whatsapp} variant="secondary" openInNewTab>
+              Falar no WhatsApp
+            </ButtonLink>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="mx-auto max-w-6xl px-4 pt-10 md:px-6 md:pt-14">
+        <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-orange-200/35 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -left-24 h-72 w-72 rounded-full bg-orange-100/60 blur-3xl" />
+
+          <div className="grid items-center gap-10 md:grid-cols-2">
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-2">
+                <MiniBadge>Curadoria oficial</MiniBadge>
+                <MiniBadge>Atalho para a Shopee</MiniBadge>
+                <MiniBadge>Sem custo extra</MiniBadge>
+              </div>
+
+              <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-zinc-900 md:text-4xl">
+                Clique, compre na Shopee e pronto.
+                <br className="hidden md:block" />A curadoria é o atalho.
+              </h1>
+
+              <p className="mt-4 text-sm leading-relaxed text-zinc-600 md:text-base">
+                Use os botões desta página para entrar na Shopee pela curadoria e finalize a compra normalmente.
+              </p>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink href={LINKS.shopeeMain} variant="primary" className="w-full sm:w-auto">
+                  Ir para a Shopee agora →
+                </ButtonLink>
+                <ButtonLink href={LINKS.whatsapp} variant="secondary" className="w-full sm:w-auto" openInNewTab>
+                  Dúvida ou comprovante (WhatsApp)
+                </ButtonLink>
+              </div>
+
+              <p className="mt-4 text-xs text-zinc-500">
+                Dica rápida: depois de abrir pela curadoria, tente finalizar sem "trocar de caminho" no meio da compra.
+              </p>
+            </div>
+
+            <div className="relative rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">Entrada pela curadoria</div>
+                <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 ring-1 ring-orange-100">
+                  Shopee
+                </span>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <div className="h-10 w-full rounded-xl bg-white shadow-sm ring-1 ring-zinc-200" />
+                <div className="h-10 w-5/6 rounded-xl bg-white shadow-sm ring-1 ring-zinc-200" />
+                <div className="h-10 w-4/6 rounded-xl bg-white shadow-sm ring-1 ring-zinc-200" />
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4">
+                <div className="text-sm font-semibold">Ação principal</div>
+                <div className="mt-1 text-xs text-zinc-600">Clique no botão e finalize sua compra normalmente.</div>
+                <div className="mt-3 h-10 w-2/3 rounded-xl bg-zinc-900" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Categorias */}
+      <section className="mx-auto mt-12 max-w-6xl px-4 md:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-semibold tracking-wide text-zinc-500">Curadoria prática</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl">
+            Comece pelo que você procura
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-600 md:text-base">
+            Escolha uma categoria e vá direto para a Shopee. Simples e rápido.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          {/* Base */}
+          <CategoryCard
+            title="Tecnologia & Acessórios"
+            desc="Eletrônicos, utilidades e itens do dia a dia."
+            href={LINKS.catTecnologia}
+            icon="bolt"
+            cta="Abrir categoria"
+          />
+          <CategoryCard
+            title="Bem-estar & Saúde"
+            desc="Esporte & fitness e achados com economia quando houver."
+            href={LINKS.catBemEstar}
+            icon="shield"
+            cta="Ver opções"
+          />
+          <CategoryCard
+            title="Mercado Shopee"
+            desc="Descobertas e achadinhos do dia (sem tranqueira)."
+            href={LINKS.catMercado}
+            icon="tag"
+            cta="Ver achadinhos"
+          />
+          <CategoryCard
+            title="Papelaria & Organização"
+            desc="Itens para estudar, planejar e manter tudo em ordem."
+            href={LINKS.catPapelaria}
+            icon="paper"
+            cta="Abrir seleção"
+          />
+
+          {/* Novas (fixas/anual) */}
+          <CategoryCard
+            title="Achadinhos"
+            desc="Garimpo de ofertas e descobertas do dia."
+            href={LINKS.catAchadinhos}
+            icon="deal"
+            cta="Ver achadinhos"
+          />
+          <CategoryCard
+            title="Moda"
+            desc="Roupas, calçados, acessórios e tendências."
+            href={LINKS.catModa}
+            icon="shirt"
+            cta="Ver moda"
+          />
+          <CategoryCard
+            title="Clube da Beleza"
+            desc="Skincare, cabelo, maquiagem e perfumaria."
+            href={LINKS.catClubeBeleza}
+            icon="sparkle"
+            cta="Ver beleza"
+          />
+          <CategoryCard
+            title="Clube Pet"
+            desc="Ração, acessórios, cuidados e bem-estar do pet."
+            href={LINKS.catClubePet}
+            icon="paw"
+            cta="Ver pet"
+          />
+          <CategoryCard
+            title="Auto e Moto"
+            desc="Acessórios, ferramentas e itens para o seu veículo."
+            href={LINKS.catAutoMoto}
+            icon="car"
+            cta="Ver auto e moto"
+          />
+          <CategoryCard
+            title="Clube do Bebê"
+            desc="Itens essenciais, cuidados e utilidades para o bebê."
+            href={LINKS.catClubeBebe}
+            icon="baby"
+            cta="Ver bebê"
+          />
+        </div>
+
+        {/* CTA reforço (meio) */}
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm md:flex-row">
+          <div>
+            <div className="text-sm font-semibold">Quer ir direto ao ponto?</div>
+            <div className="mt-1 text-sm text-zinc-600">Entre na Shopee pela curadoria e finalize sua compra.</div>
+          </div>
+
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
+            <ButtonLink href={LINKS.shopeeMain} variant="primary" className="w-full sm:w-auto">
+              Ver seleções na Shopee →
+            </ButtonLink>
+            <ButtonLink href={LINKS.whatsapp} variant="secondary" className="w-full sm:w-auto" openInNewTab>
+              Falar no WhatsApp
+            </ButtonLink>
+          </div>
+        </div>
+      </section>
+
+      {/* Rodapé enxuto */}
+      <section className="mx-auto mt-10 max-w-6xl px-4 pb-24 md:px-6 md:pb-28">
+        <footer className="rounded-3xl border border-zinc-200 bg-white p-6 text-center text-xs text-zinc-500 shadow-sm">
+          <div className="font-semibold text-zinc-800">TetelPontocom</div>
+          <div className="mt-2">
+            Este site não é afiliado, patrocinado ou administrado pela Shopee. As ofertas e curadorias são organizadas
+            de forma independente pela TetelPontocom usando recursos públicos da plataforma.
+          </div>
+          <div className="mt-3">© {new Date().getFullYear()} TetelPontocom. Todos os direitos reservados.</div>
+        </footer>
+      </section>
+
+      {/* Barra fixa mobile */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+          <ButtonLink href={LINKS.shopeeMain} variant="primary" className="w-full">
+            Ir para a Shopee agora →
+          </ButtonLink>
+        </div>
+      </div>
+    </main>
   )
 }
