@@ -2,17 +2,65 @@
 
 // app/page.tsx
 // TetelPontocom — Curadoria Shopee (LP Curadoria)
-// V0 Free Safe Mode ✅
-//
-// + Pixel Meta + Evento de Intenção Real
-// Evento: ShopeeClick (trackCustom)
-// Upgrade path (V0 Pro): GTM + Advanced Matching + CAPI
+// V0 Free Safe Mode ✅ (sem window/document fora de hooks/callbacks)
 
-import { useEffect } from "react"
 import type React from "react"
+import { useCallback, useEffect } from "react"
 
-// Fallback direto no seu Pixel (garantia de funcionamento), mas mantém env se existir.
-const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1305167264321996"
+/* =============================
+   Pixel TetelPontocom (V0 Free Safe Mode)
+   - Mesmo padrão que você já usa na página onde o Pixel funciona.
+   - Evita "arguments" em arrow function.
+   - Inicializa fbq + carrega fbevents.js com stub seguro.
+   ============================= */
+
+// Pixel fixo (evita modal/env no V0)
+// Upgrade path (V0 Pro): trocar por process.env.NEXT_PUBLIC_META_PIXEL_ID e centralizar no layout.
+const META_PIXEL_ID = "1305167264321996"
+
+function ensureMetaPixel(pixelId: string) {
+  try {
+    const w = window as any
+    if (w.fbq && w._fbq_initialized) return
+
+    if (!w.fbq) {
+      ;((f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) => {
+        if (f.fbq) return
+        n = f.fbq = (...args: any[]) => {
+          n.callMethod ? n.callMethod.apply(n, args) : n.queue.push(args)
+        }
+        if (!f._fbq) f._fbq = n
+        n.push = n
+        n.loaded = true
+        n.version = "2.0"
+        n.queue = []
+        t = b.createElement(e)
+        t.async = true
+        t.src = v
+        s = b.getElementsByTagName(e)[0]
+        s?.parentNode?.insertBefore(t, s)
+      })(w, document, "script", "https://connect.facebook.net/en_US/fbevents.js")
+    }
+
+    w._fbq_initialized = true
+    w.fbq("init", pixelId)
+    w.fbq("track", "PageView")
+    // Marca a página como "Curadoria"
+    w.fbq("trackCustom", "CuradoriaView", { page: "curadoria-shopee" })
+  } catch (err) {
+    console.error("[TetelPontocom] Pixel init error:", err)
+  }
+}
+
+function trackCustom(event: string, payload?: Record<string, any>) {
+  try {
+    const w = window as any
+    if (!w?.fbq) return
+    w.fbq("trackCustom", event, payload || {})
+  } catch (err) {
+    console.error("[TetelPontocom] Pixel trackCustom error:", err)
+  }
+}
 
 const LINKS = {
   // CTAs PRINCIPAIS (sempre este link)
@@ -37,62 +85,20 @@ const LINKS = {
     "https://wa.me/5582999176900?text=Ol%C3%A1%21%20Vim%20pela%20curadoria%20TetelPontocom%20na%20Shopee.%0AQuero%20tirar%20uma%20d%C3%BAvida%20%2F%20enviar%20um%20comprovante.%20%F0%9F%99%82",
 }
 
-/* =========================================================
-   META PIXEL (V0 Free Safe Mode)
-   - não usa window/document fora do useEffect
-   - track PageView + trackCustom ShopeeClick
-   - FIX CRÍTICO: fbq NÃO pode ser arrow function com `arguments`
-========================================================= */
-
-function initMetaPixel(pixelId: string) {
-  if (!pixelId) return
-  if ((window as any).fbq) return
-  ;((f: any, b: Document, e: string, v: string, n?: any, t?: any, s?: any) => {
-    if (f.fbq) return
-
-    // ✅ FIX: precisa ser function() para ter `arguments`
-    n = f.fbq = () => {
-      // eslint-disable-next-line prefer-rest-params
-      ;(n as any).callMethod ? (n as any).callMethod.apply(n, arguments) : (n as any).queue.push(arguments)
-    }
-
-    if (!f._fbq) f._fbq = n
-    n.push = n
-    n.loaded = true
-    n.version = "2.0"
-    n.queue = []
-    t = b.createElement(e)
-    t.async = true
-    t.src = v
-    s = b.getElementsByTagName(e)[0]
-    s.parentNode!.insertBefore(t, s)
-  })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js")
-  ;(window as any).fbq("init", pixelId)
-  ;(window as any).fbq("track", "PageView")
-}
-
-function trackShopeeClick(payload: Record<string, any>) {
-  if (!(window as any).fbq) return
-  ;(window as any).fbq("trackCustom", "ShopeeClick", payload)
-}
-
-/**
- * Links:
- * - Shopee abre em NOVA ABA (pedido do operador)
- * - WhatsApp também pode abrir em nova aba (ok)
- */
 function ButtonLink({
   href,
   children,
   variant = "primary",
-  openInNewTab = false,
+  openInNewTab = true,
   className = "",
+  onClick,
 }: {
   href: string
   children: React.ReactNode
   variant?: "primary" | "secondary" | "ghost"
   openInNewTab?: boolean
   className?: string
+  onClick?: () => void
 }) {
   const base =
     "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2"
@@ -103,15 +109,13 @@ function ButtonLink({
         ? "bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 focus:ring-zinc-300"
         : "bg-transparent text-zinc-900 hover:bg-zinc-100 focus:ring-zinc-300"
 
-  const isShopee = href.includes("shopee.")
-  const shouldOpenNewTab = openInNewTab || isShopee
-
   return (
     <a
       href={href}
-      target={shouldOpenNewTab ? "_blank" : "_self"}
-      rel={shouldOpenNewTab ? "noopener noreferrer" : undefined}
+      target={openInNewTab ? "_blank" : "_self"}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
       className={`${base} ${styles} ${className}`}
+      onClick={onClick}
     >
       {children}
     </a>
@@ -176,12 +180,7 @@ function Icon({
   if (name === "paper")
     return (
       <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path
-          d="M7 3h7l3 3v15a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinejoin="round"
-        />
+        <path d="M7 3h7l3 3v15H7V3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
         <path d="M14 3v4h4" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
       </svg>
     )
@@ -190,15 +189,15 @@ function Icon({
     return (
       <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
-          d="M12 2l1.2 5.1L18 8.3l-4.4 2.7L12 16l-1.6-5L6 8.3l4.8-1.2L12 2Z"
+          d="M12 2l1.2 4.2L17 7.4l-3.8 1.2L12 13l-1.2-4.4L7 7.4l3.8-1.2L12 2Z"
           stroke="currentColor"
           strokeWidth="1.6"
           strokeLinejoin="round"
         />
         <path
-          d="M4 14l.7 2.1L7 17l-2.3.9L4 20l-.7-2.1L1 17l2.3-.9L4 14Z"
+          d="M5 14l.8 2.8L8.6 18l-2.8.8L5 21l-.8-2.2L1.4 18l2.8-1.2L5 14Z"
           stroke="currentColor"
-          strokeWidth="1.2"
+          strokeWidth="1.6"
           strokeLinejoin="round"
         />
       </svg>
@@ -208,15 +207,17 @@ function Icon({
     return (
       <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
-          d="M12 14c-3 0-6 2-6 5 0 2 2 3 6 3s6-1 6-3c0-3-3-5-6-5Z"
+          d="M12 14c3 0 6 1.5 6 4v2H6v-2c0-2.5 3-4 6-4Z"
           stroke="currentColor"
           strokeWidth="1.6"
           strokeLinejoin="round"
         />
-        <path d="M8 10c0 1-.7 2-1.6 2S5 11 5 10s.7-2 1.4-2S8 9 8 10Z" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M19 10c0 1-.7 2-1.4 2S16 11 16 10s.7-2 1.4-2S19 9 19 10Z" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M11 7c0 1-.8 2-1.7 2S7.6 8 7.6 7 8.4 5 9.3 5 11 6 11 7Z" stroke="currentColor" strokeWidth="1.4" />
-        <path d="M16.4 7c0 1-.8 2-1.7 2S13 8 13 7s.8-2 1.7-2 1.7 1 1.7 2Z" stroke="currentColor" strokeWidth="1.4" />
+        <path d="M9 11c.8 0 1.5-.9 1.5-2S9.8 7 9 7s-1.5.9-1.5 2S8.2 11 9 11Z" stroke="currentColor" strokeWidth="1.6" />
+        <path
+          d="M15 11c.8 0 1.5-.9 1.5-2S15.8 7 15 7s-1.5.9-1.5 2S14.2 11 15 11Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        />
       </svg>
     )
 
@@ -224,31 +225,39 @@ function Icon({
     return (
       <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
-          d="M8 4 6 6 3 7l2 5 2-1v10h10V11l2 1 2-5-3-1-2-2"
+          d="M8 4 6 6 3 7l2 4 2-1v11h10V10l2 1 2-4-3-1-2-2"
           stroke="currentColor"
           strokeWidth="1.6"
           strokeLinejoin="round"
         />
-        <path d="M8 4c1 2 7 2 8 0" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
       </svg>
     )
 
   if (name === "car")
     return (
       <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M5 16l1-6 2-3h8l2 3 1 6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M4 16h16v4H4v-4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
-        <path d="M7 20v1M17 20v1" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M6 16l1-6h10l1 6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M5 16h14v4H5v-4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M8 20h.01M16 20h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
       </svg>
     )
 
   if (name === "baby")
     return (
       <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <path d="M12 21a8 8 0 1 0-8-8 8 8 0 0 0 8 8Z" stroke="currentColor" strokeWidth="1.6" />
-        <path d="M9.5 10.5h.01M14.5 10.5h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
-        <path d="M9 14c1 1 2 1.5 3 1.5S14 15 15 14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M12 5c1.2 0 2 .8 2 2" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+        <path
+          d="M12 4c4 0 7 3.6 7 8s-3 8-7 8-7-3.6-7-8 3-8 7-8Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M9 12h.01M15 12h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+        <path
+          d="M10 15c.6 1 1.7 1.5 2 1.5s1.4-.5 2-1.5"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
       </svg>
     )
 
@@ -268,6 +277,7 @@ function CategoryCard({
   icon,
   cta,
   tag,
+  onClick,
 }: {
   title: string
   desc: string
@@ -275,12 +285,14 @@ function CategoryCard({
   icon: "bolt" | "shield" | "tag" | "paper" | "sparkle" | "paw" | "shirt" | "car" | "baby" | "deal"
   cta: string
   tag?: string
+  onClick?: () => void
 }) {
   return (
     <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      onClick={onClick}
       className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md hover:-translate-y-[1px] focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2"
       aria-label={`${title} - abrir na Shopee`}
     >
@@ -319,31 +331,19 @@ function CategoryCard({
 
 export default function Page() {
   useEffect(() => {
-    initMetaPixel(META_PIXEL_ID)
+    ensureMetaPixel(META_PIXEL_ID)
+  }, [])
 
-    function handleClick(e: MouseEvent) {
-      const target = e.target as HTMLElement | null
-      if (!target) return
+  const onShopeeClick = useCallback((placement: string, href: string) => {
+    trackCustom("ShopeeClick", {
+      placement,
+      href,
+      page: "curadoria-shopee",
+    })
+  }, [])
 
-      const anchor = target.closest("a") as HTMLAnchorElement | null
-      if (!anchor) return
-
-      const href = anchor.href || ""
-      if (!href.includes("shopee.")) return
-
-      const rawLabel = (anchor.innerText || anchor.getAttribute("aria-label") || "").trim()
-      const label = rawLabel ? rawLabel.slice(0, 100) : "shopee_outbound"
-
-      trackShopeeClick({
-        url: href,
-        label,
-        source: "curadoria",
-        campaign_phase: "shopee_fase2_trafego",
-      })
-    }
-
-    document.addEventListener("click", handleClick)
-    return () => document.removeEventListener("click", handleClick)
+  const onWhatsAppClick = useCallback(() => {
+    trackCustom("WhatsAppClick", { page: "curadoria-shopee" })
   }, [])
 
   return (
@@ -364,10 +364,15 @@ export default function Page() {
           </div>
 
           <div className="hidden md:flex items-center gap-2">
-            <ButtonLink href={LINKS.shopeeMain} variant="primary">
+            <ButtonLink
+              href={LINKS.shopeeMain}
+              variant="primary"
+              openInNewTab
+              onClick={() => onShopeeClick("header", LINKS.shopeeMain)}
+            >
               Ver seleções na Shopee
             </ButtonLink>
-            <ButtonLink href={LINKS.whatsapp} variant="secondary" openInNewTab>
+            <ButtonLink href={LINKS.whatsapp} variant="secondary" openInNewTab onClick={onWhatsAppClick}>
               Falar no WhatsApp
             </ButtonLink>
           </div>
@@ -398,10 +403,23 @@ export default function Page() {
               </p>
 
               <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <ButtonLink href={LINKS.shopeeMain} variant="primary" className="w-full sm:w-auto">
+                <ButtonLink
+                  href={LINKS.shopeeMain}
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  openInNewTab
+                  onClick={() => onShopeeClick("hero_primary", LINKS.shopeeMain)}
+                >
                   Ir para a Shopee agora →
                 </ButtonLink>
-                <ButtonLink href={LINKS.whatsapp} variant="secondary" className="w-full sm:w-auto" openInNewTab>
+
+                <ButtonLink
+                  href={LINKS.whatsapp}
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  openInNewTab
+                  onClick={onWhatsAppClick}
+                >
                   Dúvida ou comprovante (WhatsApp)
                 </ButtonLink>
               </div>
@@ -456,6 +474,7 @@ export default function Page() {
             href={LINKS.catAchadinhos}
             icon="deal"
             cta="Abrir achadinhos"
+            onClick={() => onShopeeClick("category_achadinhos", LINKS.catAchadinhos)}
           />
 
           <CategoryCard
@@ -465,6 +484,7 @@ export default function Page() {
             href={LINKS.catMercado}
             icon="tag"
             cta="Explorar agora"
+            onClick={() => onShopeeClick("category_explorar", LINKS.catMercado)}
           />
 
           <CategoryCard
@@ -474,6 +494,7 @@ export default function Page() {
             href={LINKS.catModa}
             icon="shirt"
             cta="Ver moda"
+            onClick={() => onShopeeClick("category_moda", LINKS.catModa)}
           />
 
           <CategoryCard
@@ -483,6 +504,7 @@ export default function Page() {
             href={LINKS.catClubeBeleza}
             icon="sparkle"
             cta="Ver beleza"
+            onClick={() => onShopeeClick("category_beleza", LINKS.catClubeBeleza)}
           />
 
           <CategoryCard
@@ -492,6 +514,7 @@ export default function Page() {
             href={LINKS.catClubePet}
             icon="paw"
             cta="Ver pet"
+            onClick={() => onShopeeClick("category_pet", LINKS.catClubePet)}
           />
 
           <CategoryCard
@@ -501,6 +524,7 @@ export default function Page() {
             href={LINKS.catClubeBebe}
             icon="baby"
             cta="Ver bebê"
+            onClick={() => onShopeeClick("category_bebe", LINKS.catClubeBebe)}
           />
 
           <CategoryCard
@@ -510,6 +534,7 @@ export default function Page() {
             href={LINKS.catAutoMoto}
             icon="car"
             cta="Ver auto e moto"
+            onClick={() => onShopeeClick("category_auto", LINKS.catAutoMoto)}
           />
 
           <CategoryCard
@@ -519,6 +544,7 @@ export default function Page() {
             href={LINKS.catTecnologia}
             icon="bolt"
             cta="Abrir tecnologia"
+            onClick={() => onShopeeClick("category_tecnologia", LINKS.catTecnologia)}
           />
 
           <CategoryCard
@@ -528,6 +554,7 @@ export default function Page() {
             href={LINKS.catBemEstar}
             icon="shield"
             cta="Ver bem-estar"
+            onClick={() => onShopeeClick("category_bem_estar", LINKS.catBemEstar)}
           />
 
           <CategoryCard
@@ -537,23 +564,18 @@ export default function Page() {
             href={LINKS.catPapelaria}
             icon="paper"
             cta="Abrir papelaria"
+            onClick={() => onShopeeClick("category_papelaria", LINKS.catPapelaria)}
           />
         </div>
 
         <div className="mt-8 flex flex-col items-center justify-between gap-3 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm md:flex-row">
           <div>
-            <div className="text-sm font-semibold">Quer ir direto ao ponto?</div>
-            <div className="mt-1 text-sm text-zinc-600">Entre na Shopee pela curadoria e finalize sua compra.</div>
+            <div className="text-sm font-semibold">Quer tirar uma dúvida ou enviar um comprovante?</div>
+            <p className="mt-1 text-sm text-zinc-600">Chame a gente no WhatsApp. Atendemos rápido e com atenção.</p>
           </div>
-
-          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-            <ButtonLink href={LINKS.shopeeMain} variant="primary" className="w-full sm:w-auto">
-              Ver seleções na Shopee →
-            </ButtonLink>
-            <ButtonLink href={LINKS.whatsapp} variant="secondary" className="w-full sm:w-auto" openInNewTab>
-              Falar no WhatsApp
-            </ButtonLink>
-          </div>
+          <ButtonLink href={LINKS.whatsapp} variant="secondary" openInNewTab onClick={onWhatsAppClick}>
+            Falar no WhatsApp
+          </ButtonLink>
         </div>
       </section>
 
