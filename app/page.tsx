@@ -4,8 +4,15 @@
 // TetelPontocom — Curadoria Shopee (LP Curadoria)
 // Iteração Persuasão + UX (card inteiro clicável, microcopy persuasiva, sem duplicidade "Achadinhos")
 // V0 Free Safe Mode ✅
+//
+// + Pixel Meta + Evento de Intenção Real
+// Evento: ShopeeClick (trackCustom)
+// Upgrade path (V0 Pro): GTM + Advanced Matching + CAPI
 
+import { useEffect } from "react"
 import type React from "react"
+
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "SEU_PIXEL_ID_AQUI"
 
 const LINKS = {
   // CTAs PRINCIPAIS (sempre este link)
@@ -28,6 +35,40 @@ const LINKS = {
   // WhatsApp (neutro: dúvida OU comprovante)
   whatsapp:
     "https://wa.me/5582999176900?text=Ol%C3%A1%21%20Vim%20pela%20curadoria%20TetelPontocom%20na%20Shopee.%0AQuero%20tirar%20uma%20d%C3%BAvida%20%2F%20enviar%20um%20comprovante.%20%F0%9F%99%82",
+}
+
+/* =========================================================
+   META PIXEL (V0 Free Safe Mode)
+   - não usa window/document fora do useEffect
+   - track PageView + trackCustom ShopeeClick
+========================================================= */
+
+function initMetaPixel(pixelId: string) {
+  if (!pixelId || pixelId === "SEU_PIXEL_ID_AQUI") return
+  if ((window as any).fbq) return
+  ;((f: any, b: Document, e: string, v: string, n?: any, t?: any, s?: any) => {
+    if (f.fbq) return
+    n = f.fbq = () => {
+      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+    }
+    if (!f._fbq) f._fbq = n
+    n.push = n
+    n.loaded = true
+    n.version = "2.0"
+    n.queue = []
+    t = b.createElement(e)
+    t.async = true
+    t.src = v
+    s = b.getElementsByTagName(e)[0]
+    s.parentNode!.insertBefore(t, s)
+  })(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js")
+  ;(window as any).fbq("init", pixelId)
+  ;(window as any).fbq("track", "PageView")
+}
+
+function trackShopeeClick(payload: Record<string, any>) {
+  if (!(window as any).fbq) return
+  ;(window as any).fbq("trackCustom", "ShopeeClick", payload)
 }
 
 // Shopee: manter mesma aba tende a reduzir quebra de sessão em mobile.
@@ -272,6 +313,37 @@ function CategoryCard({
 }
 
 export default function Page() {
+  useEffect(() => {
+    // Pixel bootstrap + PageView
+    initMetaPixel(META_PIXEL_ID)
+
+    // Captura de intenção real: qualquer saída para Shopee
+    function handleClick(e: MouseEvent) {
+      const target = e.target as HTMLElement | null
+      if (!target) return
+
+      const anchor = target.closest("a") as HTMLAnchorElement | null
+      if (!anchor) return
+
+      const href = anchor.href || ""
+      if (!href.includes("shopee.")) return
+
+      // label: tenta pegar texto do link/card/botão, sem quebrar nada
+      const rawLabel = (anchor.innerText || anchor.getAttribute("aria-label") || "").trim()
+      const label = rawLabel ? rawLabel.slice(0, 100) : "shopee_outbound"
+
+      trackShopeeClick({
+        url: href,
+        label,
+        source: "curadoria",
+        campaign_phase: "shopee_fase2_trafego",
+      })
+    }
+
+    document.addEventListener("click", handleClick)
+    return () => document.removeEventListener("click", handleClick)
+  }, [])
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50/50 via-white to-white text-zinc-900">
       {/* Header */}
@@ -333,7 +405,8 @@ export default function Page() {
               </div>
 
               <p className="mt-4 text-xs text-zinc-500">
-                Dica rápida: depois de abrir pela curadoria, tente finalizar sem "trocar de caminho" no meio da compra.
+                Dica rápida: depois de abrir pela curadoria, tente finalizar sem &quot;trocar de caminho&quot; no meio
+                da compra.
               </p>
             </div>
 
@@ -506,6 +579,14 @@ export default function Page() {
           </ButtonLink>
         </div>
       </div>
+
+      {/* Upgrade path (V0 Pro) */}
+      {/*
+        Upgrade path (V0 Pro):
+        - Instrumentar eventos de clique (Pixel Universal Tetel / analytics)
+        - A/B test de microcopy por categoria
+        - Miniaturas (banners) hospedadas em /public para cada card (rápido e estável)
+      */}
     </main>
   )
 }
