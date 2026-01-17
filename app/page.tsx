@@ -2,7 +2,6 @@
 
 // app/page.tsx
 // TetelPontocom — Curadoria Shopee (LP Curadoria)
-// Iteração Persuasão + UX (card inteiro clicável, microcopy persuasiva, sem duplicidade "Achadinhos")
 // V0 Free Safe Mode ✅
 //
 // + Pixel Meta + Evento de Intenção Real
@@ -12,7 +11,8 @@
 import { useEffect } from "react"
 import type React from "react"
 
-const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "SEU_PIXEL_ID_AQUI"
+// Fallback direto no seu Pixel (garantia de funcionamento), mas mantém env se existir.
+const META_PIXEL_ID = process.env.NEXT_PUBLIC_META_PIXEL_ID || "1305167264321996"
 
 const LINKS = {
   // CTAs PRINCIPAIS (sempre este link)
@@ -41,16 +41,21 @@ const LINKS = {
    META PIXEL (V0 Free Safe Mode)
    - não usa window/document fora do useEffect
    - track PageView + trackCustom ShopeeClick
+   - FIX CRÍTICO: fbq NÃO pode ser arrow function com `arguments`
 ========================================================= */
 
 function initMetaPixel(pixelId: string) {
-  if (!pixelId || pixelId === "SEU_PIXEL_ID_AQUI") return
+  if (!pixelId) return
   if ((window as any).fbq) return
   ;((f: any, b: Document, e: string, v: string, n?: any, t?: any, s?: any) => {
     if (f.fbq) return
+
+    // ✅ FIX: precisa ser function() para ter `arguments`
     n = f.fbq = () => {
-      n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments)
+      // eslint-disable-next-line prefer-rest-params
+      ;(n as any).callMethod ? (n as any).callMethod.apply(n, arguments) : (n as any).queue.push(arguments)
     }
+
     if (!f._fbq) f._fbq = n
     n.push = n
     n.loaded = true
@@ -71,8 +76,11 @@ function trackShopeeClick(payload: Record<string, any>) {
   ;(window as any).fbq("trackCustom", "ShopeeClick", payload)
 }
 
-// Shopee: manter mesma aba tende a reduzir quebra de sessão em mobile.
-// WhatsApp: abrir nova aba é ok (não é link de atribuição).
+/**
+ * Links:
+ * - Shopee abre em NOVA ABA (pedido do operador)
+ * - WhatsApp também pode abrir em nova aba (ok)
+ */
 function ButtonLink({
   href,
   children,
@@ -95,11 +103,14 @@ function ButtonLink({
         ? "bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 focus:ring-zinc-300"
         : "bg-transparent text-zinc-900 hover:bg-zinc-100 focus:ring-zinc-300"
 
+  const isShopee = href.includes("shopee.")
+  const shouldOpenNewTab = openInNewTab || isShopee
+
   return (
     <a
       href={href}
-      target={openInNewTab ? "_blank" : "_self"}
-      rel={openInNewTab ? "noopener noreferrer" : undefined}
+      target={shouldOpenNewTab ? "_blank" : "_self"}
+      rel={shouldOpenNewTab ? "noopener noreferrer" : undefined}
       className={`${base} ${styles} ${className}`}
     >
       {children}
@@ -250,12 +261,6 @@ function Icon({
   )
 }
 
-/**
- * Card inteiro clicável:
- * - link envolve todo o container
- * - seta vira reforço visual (não o único clique)
- * - sem usar onClick/window fora de useEffect (V0 Free Safe Mode)
- */
 function CategoryCard({
   title,
   desc,
@@ -274,7 +279,8 @@ function CategoryCard({
   return (
     <a
       href={href}
-      target="_self"
+      target="_blank"
+      rel="noopener noreferrer"
       className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md hover:-translate-y-[1px] focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2"
       aria-label={`${title} - abrir na Shopee`}
     >
@@ -293,7 +299,6 @@ function CategoryCard({
               <p className="mt-1 text-sm text-zinc-600">{desc}</p>
             </div>
 
-            {/* seta como reforço visual */}
             <span
               className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition group-hover:bg-zinc-50 group-hover:text-zinc-900"
               aria-hidden="true"
@@ -314,10 +319,8 @@ function CategoryCard({
 
 export default function Page() {
   useEffect(() => {
-    // Pixel bootstrap + PageView
     initMetaPixel(META_PIXEL_ID)
 
-    // Captura de intenção real: qualquer saída para Shopee
     function handleClick(e: MouseEvent) {
       const target = e.target as HTMLElement | null
       if (!target) return
@@ -328,7 +331,6 @@ export default function Page() {
       const href = anchor.href || ""
       if (!href.includes("shopee.")) return
 
-      // label: tenta pegar texto do link/card/botão, sem quebrar nada
       const rawLabel = (anchor.innerText || anchor.getAttribute("aria-label") || "").trim()
       const label = rawLabel ? rawLabel.slice(0, 100) : "shopee_outbound"
 
@@ -447,7 +449,6 @@ export default function Page() {
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-2">
-          {/* Impulso vs Exploração (remove duplicidade "Achadinhos") */}
           <CategoryCard
             title="Achadinhos do Dia"
             tag="Mais clicados"
@@ -466,7 +467,6 @@ export default function Page() {
             cta="Explorar agora"
           />
 
-          {/* Fixas/anual (microcopy persuasiva leve) */}
           <CategoryCard
             title="Moda"
             tag="Renove sem gastar"
@@ -512,7 +512,6 @@ export default function Page() {
             cta="Ver auto e moto"
           />
 
-          {/* Bases que continuam úteis */}
           <CategoryCard
             title="Tecnologia & Acessórios"
             tag="Úteis do dia a dia"
@@ -541,7 +540,6 @@ export default function Page() {
           />
         </div>
 
-        {/* CTA reforço (meio) */}
         <div className="mt-8 flex flex-col items-center justify-between gap-3 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm md:flex-row">
           <div>
             <div className="text-sm font-semibold">Quer ir direto ao ponto?</div>
@@ -559,7 +557,6 @@ export default function Page() {
         </div>
       </section>
 
-      {/* Rodapé */}
       <section className="mx-auto mt-10 max-w-6xl px-4 pb-24 md:px-6 md:pb-28">
         <footer className="rounded-3xl border border-zinc-200 bg-white p-6 text-center text-xs text-zinc-500 shadow-sm">
           <div className="font-semibold text-zinc-800">TetelPontocom</div>
@@ -571,7 +568,6 @@ export default function Page() {
         </footer>
       </section>
 
-      {/* Barra fixa mobile */}
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur md:hidden">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
           <ButtonLink href={LINKS.shopeeMain} variant="primary" className="w-full">
@@ -579,14 +575,6 @@ export default function Page() {
           </ButtonLink>
         </div>
       </div>
-
-      {/* Upgrade path (V0 Pro) */}
-      {/*
-        Upgrade path (V0 Pro):
-        - Instrumentar eventos de clique (Pixel Universal Tetel / analytics)
-        - A/B test de microcopy por categoria
-        - Miniaturas (banners) hospedadas em /public para cada card (rápido e estável)
-      */}
     </main>
   )
 }
