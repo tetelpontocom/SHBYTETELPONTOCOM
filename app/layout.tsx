@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   description: "Compre na Shopee e ganhe recompensas exclusivas TetelPontocom. MinhaIA Premium, sorteios e muito mais!",
   generator: "v0.app",
   icons: {
-    icon: "/images/s-c3-admbolo-tetelpontocom.jpg",
+    icon: "/images/tetelpontocom-simbolo-overlay.png",
   },
 }
 
