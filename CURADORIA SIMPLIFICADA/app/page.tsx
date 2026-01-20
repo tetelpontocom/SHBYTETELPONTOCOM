@@ -1,0 +1,602 @@
+"use client"
+
+// app/page.tsx
+// TetelPontocom — Curadoria Shopee (LP Curadoria)
+// V0 Free Safe Mode ✅ (sem window/document fora de hooks/callbacks)
+
+import type React from "react"
+import { useCallback, useEffect } from "react"
+
+/* =============================
+   Pixel TetelPontocom (V0 Free Safe Mode)
+   - Mesmo padrão que você já usa na página onde o Pixel funciona.
+   - Evita "arguments" em arrow function.
+   - Inicializa fbq + carrega fbevents.js com stub seguro.
+   ============================= */
+
+// Pixel fixo (evita modal/env no V0)
+// Upgrade path (V0 Pro): trocar por process.env.NEXT_PUBLIC_META_PIXEL_ID e centralizar no layout.
+const META_PIXEL_ID = "1305167264321996"
+
+function ensureMetaPixel(pixelId: string) {
+  try {
+    const w = window as any
+    if (w.fbq && w._fbq_initialized) return
+
+    if (!w.fbq) {
+      ;((f: any, b: any, e: any, v: any, n?: any, t?: any, s?: any) => {
+        if (f.fbq) return
+        n = f.fbq = (...args: any[]) => {
+          n.callMethod ? n.callMethod.apply(n, args) : n.queue.push(args)
+        }
+        if (!f._fbq) f._fbq = n
+        n.push = n
+        n.loaded = true
+        n.version = "2.0"
+        n.queue = []
+        t = b.createElement(e)
+        t.async = true
+        t.src = v
+        s = b.getElementsByTagName(e)[0]
+        s?.parentNode?.insertBefore(t, s)
+      })(w, document, "script", "https://connect.facebook.net/en_US/fbevents.js")
+    }
+
+    w._fbq_initialized = true
+    w.fbq("init", pixelId)
+    w.fbq("track", "PageView")
+    // Marca a página como "Curadoria"
+    w.fbq("trackCustom", "CuradoriaView", { page: "curadoria-shopee" })
+  } catch (err) {
+    console.error("[TetelPontocom] Pixel init error:", err)
+  }
+}
+
+function trackCustom(event: string, payload?: Record<string, any>) {
+  try {
+    const w = window as any
+    if (!w?.fbq) return
+    w.fbq("trackCustom", event, payload || {})
+  } catch (err) {
+    console.error("[TetelPontocom] Pixel trackCustom error:", err)
+  }
+}
+
+const LINKS = {
+  // CTAs PRINCIPAIS (sempre este link)
+  shopeeMain: "https://s.shopee.com.br/8AP48CmyxJ",
+
+  // Links base (já convertidos)
+  catTecnologia: "https://s.shopee.com.br/7fSo5SM4H1",
+  catBemEstar: "https://s.shopee.com.br/10vuHeBleE",
+  catMercado: "https://s.shopee.com.br/805ecxvo7h",
+  catPapelaria: "https://s.shopee.com.br/7pmDgk2YOy",
+
+  // Categorias fixas (já convertidas)
+  catAchadinhos: "https://s.shopee.com.br/1BG7BsNCTi",
+  catModa: "https://s.shopee.com.br/9fEfJrdDec",
+  catClubeBeleza: "https://s.shopee.com.br/2VlUmnO0aO",
+  catClubePet: "https://s.shopee.com.br/5q1wl2qh7D",
+  catAutoMoto: "https://s.shopee.com.br/40aIZlqe0d",
+  catClubeBebe: "https://s.shopee.com.br/5fiWYwH4c4",
+
+  // WhatsApp (neutro: dúvida OU comprovante)
+  whatsapp:
+    "https://wa.me/5582999176900?text=Ol%C3%A1%21%20Vim%20pela%20curadoria%20TetelPontocom%20na%20Shopee.%0AQuero%20tirar%20uma%20d%C3%BAvida%20%2F%20enviar%20um%20comprovante.%20%F0%9F%99%82",
+}
+
+function ButtonLink({
+  href,
+  children,
+  variant = "primary",
+  openInNewTab = true,
+  className = "",
+  onClick,
+}: {
+  href: string
+  children: React.ReactNode
+  variant?: "primary" | "secondary" | "ghost"
+  openInNewTab?: boolean
+  className?: string
+  onClick?: () => void
+}) {
+  const base =
+    "inline-flex items-center justify-center rounded-xl px-5 py-3 text-sm font-semibold transition active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-offset-2"
+  const styles =
+    variant === "primary"
+      ? "bg-zinc-900 text-white hover:bg-zinc-800 focus:ring-zinc-900"
+      : variant === "secondary"
+        ? "bg-white text-zinc-900 border border-zinc-200 hover:bg-zinc-50 focus:ring-zinc-300"
+        : "bg-transparent text-zinc-900 hover:bg-zinc-100 focus:ring-zinc-300"
+
+  return (
+    <a
+      href={href}
+      target={openInNewTab ? "_blank" : "_self"}
+      rel={openInNewTab ? "noopener noreferrer" : undefined}
+      className={`${base} ${styles} ${className}`}
+      onClick={onClick}
+    >
+      {children}
+    </a>
+  )
+}
+
+function MiniBadge({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full border border-zinc-200 bg-white/70 px-3 py-1 text-xs font-medium text-zinc-600">
+      {children}
+    </span>
+  )
+}
+
+function MicroTag({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex items-center rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-700 ring-1 ring-orange-100">
+      {children}
+    </span>
+  )
+}
+
+function Icon({
+  name,
+}: {
+  name: "bolt" | "shield" | "tag" | "paper" | "sparkle" | "paw" | "shirt" | "car" | "baby" | "deal"
+}) {
+  const common = "h-5 w-5"
+
+  if (name === "bolt")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M13 2 3 14h8l-1 8 11-14h-8l0-6Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    )
+
+  if (name === "shield")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 2 20 6v6c0 5-3.4 9.4-8 10-4.6-.6-8-5-8-10V6l8-4Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
+
+  if (name === "tag")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M20 13 13 20a2 2 0 0 1-2.8 0L3 12V4h8l9 9Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M7.5 7.5h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      </svg>
+    )
+
+  if (name === "paper")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M7 3h7l3 3v15H7V3Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M14 3v4h4" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      </svg>
+    )
+
+  if (name === "sparkle")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 2l1.2 4.2L17 7.4l-3.8 1.2L12 13l-1.2-4.4L7 7.4l3.8-1.2L12 2Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M5 14l.8 2.8L8.6 18l-2.8.8L5 21l-.8-2.2L1.4 18l2.8-1.2L5 14Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
+
+  if (name === "paw")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 14c3 0 6 1.5 6 4v2H6v-2c0-2.5 3-4 6-4Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M9 11c.8 0 1.5-.9 1.5-2S9.8 7 9 7s-1.5.9-1.5 2S8.2 11 9 11Z" stroke="currentColor" strokeWidth="1.6" />
+        <path
+          d="M15 11c.8 0 1.5-.9 1.5-2S15.8 7 15 7s-1.5.9-1.5 2S14.2 11 15 11Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        />
+      </svg>
+    )
+
+  if (name === "shirt")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M8 4 6 6 3 7l2 4 2-1v11h10V10l2 1 2-4-3-1-2-2"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+      </svg>
+    )
+
+  if (name === "car")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 16l1-6h10l1 6" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M5 16h14v4H5v-4Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+        <path d="M8 20h.01M16 20h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+      </svg>
+    )
+
+  if (name === "baby")
+    return (
+      <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 4c4 0 7 3.6 7 8s-3 8-7 8-7-3.6-7-8 3-8 7-8Z"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinejoin="round"
+        />
+        <path d="M9 12h.01M15 12h.01" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" />
+        <path
+          d="M10 15c.6 1 1.7 1.5 2 1.5s1.4-.5 2-1.5"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+      </svg>
+    )
+
+  // deal
+  return (
+    <svg className={common} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M20 7l-8 13L4 12l3-5h13Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M7 7h13" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function CategoryCard({
+  title,
+  desc,
+  href,
+  icon,
+  cta,
+  tag,
+  onClick,
+}: {
+  title: string
+  desc: string
+  href: string
+  icon: "bolt" | "shield" | "tag" | "paper" | "sparkle" | "paw" | "shirt" | "car" | "baby" | "deal"
+  cta: string
+  tag?: string
+  onClick?: () => void
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      className="group block rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:shadow-md hover:-translate-y-[1px] focus:outline-none focus:ring-2 focus:ring-orange-200 focus:ring-offset-2"
+      aria-label={`${title} - abrir na Shopee`}
+    >
+      <div className="flex items-start gap-4">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-50 text-orange-700 ring-1 ring-orange-100">
+          <Icon name={icon} />
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base font-semibold text-zinc-900">{title}</h3>
+                {tag ? <MicroTag>{tag}</MicroTag> : null}
+              </div>
+              <p className="mt-1 text-sm text-zinc-600">{desc}</p>
+            </div>
+
+            <span
+              className="mt-1 inline-flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 bg-white text-zinc-600 transition group-hover:bg-zinc-50 group-hover:text-zinc-900"
+              aria-hidden="true"
+              title="Abrir"
+            >
+              →
+            </span>
+          </div>
+
+          <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-zinc-900">
+            {cta} <span aria-hidden>↗</span>
+          </div>
+        </div>
+      </div>
+    </a>
+  )
+}
+
+export default function Page() {
+  useEffect(() => {
+    ensureMetaPixel(META_PIXEL_ID)
+  }, [])
+
+  const onShopeeClick = useCallback((placement: string, href: string) => {
+    trackCustom("ShopeeClick", {
+      placement,
+      href,
+      page: "curadoria-shopee",
+    })
+  }, [])
+
+  const onWhatsAppClick = useCallback(() => {
+    trackCustom("WhatsAppClick", { page: "curadoria-shopee" })
+  }, [])
+
+  return (
+    <main className="min-h-screen bg-gradient-to-b from-orange-50/50 via-white to-white text-zinc-900">
+      {/* Header */}
+      <header className="sticky top-0 z-30 border-b border-zinc-200 bg-white/85 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3 md:px-6">
+          <div className="flex items-center gap-3">
+            <img
+              src="/images/tetelpontocom-simbolo-overlay.png"
+              alt="TetelPontocom"
+              className="h-9 w-9 object-contain"
+            />
+            <div className="leading-tight">
+              <div className="text-sm font-semibold">TetelPontocom</div>
+              <div className="text-xs text-zinc-500">Curadoria Shopee</div>
+            </div>
+          </div>
+
+          <div className="hidden md:flex items-center gap-2">
+            <ButtonLink
+              href={LINKS.shopeeMain}
+              variant="primary"
+              openInNewTab
+              onClick={() => onShopeeClick("header", LINKS.shopeeMain)}
+            >
+              Ver seleções na Shopee
+            </ButtonLink>
+            <ButtonLink href={LINKS.whatsapp} variant="secondary" openInNewTab onClick={onWhatsAppClick}>
+              Falar no WhatsApp
+            </ButtonLink>
+          </div>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="mx-auto max-w-6xl px-4 pt-10 md:px-6 md:pt-14">
+        <div className="relative overflow-hidden rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm md:p-10">
+          <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-orange-200/35 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-28 -left-24 h-72 w-72 rounded-full bg-orange-100/60 blur-3xl" />
+
+          <div className="grid items-center gap-10 md:grid-cols-2">
+            <div className="relative">
+              <div className="flex flex-wrap items-center gap-2">
+                <MiniBadge>Curadoria oficial</MiniBadge>
+                <MiniBadge>Atalho para a Shopee</MiniBadge>
+                <MiniBadge>Sem custo extra</MiniBadge>
+              </div>
+
+              <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-zinc-900 md:text-4xl">
+                Clique, compre na Shopee e pronto.
+                <br className="hidden md:block" />A curadoria é o atalho.
+              </h1>
+
+              <p className="mt-4 text-sm leading-relaxed text-zinc-600 md:text-base">
+                Use os botões desta página para entrar na Shopee pela curadoria e finalize a compra normalmente.
+              </p>
+
+              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+                <ButtonLink
+                  href={LINKS.shopeeMain}
+                  variant="primary"
+                  className="w-full sm:w-auto"
+                  openInNewTab
+                  onClick={() => onShopeeClick("hero_primary", LINKS.shopeeMain)}
+                >
+                  Ir para a Shopee agora →
+                </ButtonLink>
+
+                <ButtonLink
+                  href={LINKS.whatsapp}
+                  variant="secondary"
+                  className="w-full sm:w-auto"
+                  openInNewTab
+                  onClick={onWhatsAppClick}
+                >
+                  Dúvida ou comprovante (WhatsApp)
+                </ButtonLink>
+              </div>
+
+              <p className="mt-4 text-xs text-zinc-500">
+                Dica rápida: depois de abrir pela curadoria, tente finalizar sem &quot;trocar de caminho&quot; no meio
+                da compra.
+              </p>
+            </div>
+
+            <div className="relative rounded-2xl border border-zinc-200 bg-gradient-to-br from-zinc-50 to-white p-6">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold">Entrada pela curadoria</div>
+                <span className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700 ring-1 ring-orange-100">
+                  Shopee
+                </span>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                <div className="h-10 w-full rounded-xl bg-white shadow-sm ring-1 ring-zinc-200" />
+                <div className="h-10 w-5/6 rounded-xl bg-white shadow-sm ring-1 ring-zinc-200" />
+                <div className="h-10 w-4/6 rounded-xl bg-white shadow-sm ring-1 ring-zinc-200" />
+              </div>
+
+              <div className="mt-6 rounded-2xl border border-zinc-200 bg-white p-4">
+                <div className="text-sm font-semibold">Ação principal</div>
+                <div className="mt-1 text-xs text-zinc-600">Clique no botão e finalize sua compra normalmente.</div>
+                <div className="mt-3 h-10 w-2/3 rounded-xl bg-zinc-900" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Categorias */}
+      <section className="mx-auto mt-12 max-w-6xl px-4 md:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <p className="text-xs font-semibold tracking-wide text-zinc-500">Curadoria prática</p>
+          <h2 className="mt-2 text-2xl font-bold tracking-tight text-zinc-900 md:text-3xl">
+            Escolha um atalho e vá direto
+          </h2>
+          <p className="mt-3 text-sm leading-relaxed text-zinc-600 md:text-base">
+            Clique no card inteiro (não só na seta) e entre na Shopee pela categoria.
+          </p>
+        </div>
+
+        <div className="mt-8 grid gap-4 md:grid-cols-2">
+          <CategoryCard
+            title="Achadinhos do Dia"
+            tag="Mais clicados"
+            desc="Garimpo rápido do que está valendo a pena agora (sem perder tempo)."
+            href={LINKS.catAchadinhos}
+            icon="deal"
+            cta="Abrir achadinhos"
+            onClick={() => onShopeeClick("category_achadinhos", LINKS.catAchadinhos)}
+          />
+
+          <CategoryCard
+            title="Explorar a Shopee"
+            tag="Visão geral"
+            desc="Ofertas e categorias amplas pra navegar quando você quer procurar com calma."
+            href={LINKS.catMercado}
+            icon="tag"
+            cta="Explorar agora"
+            onClick={() => onShopeeClick("category_explorar", LINKS.catMercado)}
+          />
+
+          <CategoryCard
+            title="Moda"
+            tag="Renove sem gastar"
+            desc="Roupas, calçados e acessórios com custo-benefício e variedade."
+            href={LINKS.catModa}
+            icon="shirt"
+            cta="Ver moda"
+            onClick={() => onShopeeClick("category_moda", LINKS.catModa)}
+          />
+
+          <CategoryCard
+            title="Clube da Beleza"
+            tag="Custo-benefício"
+            desc="Skincare, cabelo, maquiagem e perfumaria — escolha com mais acerto."
+            href={LINKS.catClubeBeleza}
+            icon="sparkle"
+            cta="Ver beleza"
+            onClick={() => onShopeeClick("category_beleza", LINKS.catClubeBeleza)}
+          />
+
+          <CategoryCard
+            title="Clube Pet"
+            tag="Pro seu pet"
+            desc="Ração, acessórios e cuidados — prático e direto ao que importa."
+            href={LINKS.catClubePet}
+            icon="paw"
+            cta="Ver pet"
+            onClick={() => onShopeeClick("category_pet", LINKS.catClubePet)}
+          />
+
+          <CategoryCard
+            title="Clube do Bebê"
+            tag="Essenciais"
+            desc="Itens úteis do bebê com praticidade — sem errar na escolha."
+            href={LINKS.catClubeBebe}
+            icon="baby"
+            cta="Ver bebê"
+            onClick={() => onShopeeClick("category_bebe", LINKS.catClubeBebe)}
+          />
+
+          <CategoryCard
+            title="Auto e Moto"
+            tag="Resolve rápido"
+            desc="Acessórios e itens do dia a dia do veículo — útil e sem enrolação."
+            href={LINKS.catAutoMoto}
+            icon="car"
+            cta="Ver auto e moto"
+            onClick={() => onShopeeClick("category_auto", LINKS.catAutoMoto)}
+          />
+
+          <CategoryCard
+            title="Tecnologia & Acessórios"
+            tag="Úteis do dia a dia"
+            desc="Eletrônicos e utilidades — atalho pra achar o que resolve."
+            href={LINKS.catTecnologia}
+            icon="bolt"
+            cta="Abrir tecnologia"
+            onClick={() => onShopeeClick("category_tecnologia", LINKS.catTecnologia)}
+          />
+
+          <CategoryCard
+            title="Bem-estar & Saúde"
+            tag="Vida prática"
+            desc="Esporte & fitness e itens de cuidado — quando fizer sentido pra você."
+            href={LINKS.catBemEstar}
+            icon="shield"
+            cta="Ver bem-estar"
+            onClick={() => onShopeeClick("category_bem_estar", LINKS.catBemEstar)}
+          />
+
+          <CategoryCard
+            title="Papelaria & Organização"
+            tag="Organize-se"
+            desc="Itens para estudar, planejar e manter tudo em ordem."
+            href={LINKS.catPapelaria}
+            icon="paper"
+            cta="Abrir papelaria"
+            onClick={() => onShopeeClick("category_papelaria", LINKS.catPapelaria)}
+          />
+        </div>
+
+        <div className="mt-8 flex flex-col items-center justify-between gap-3 rounded-3xl border border-zinc-200 bg-white p-6 shadow-sm md:flex-row">
+          <div>
+            <div className="text-sm font-semibold">Quer tirar uma dúvida ou enviar um comprovante?</div>
+            <p className="mt-1 text-sm text-zinc-600">Chame a gente no WhatsApp. Atendemos rápido e com atenção.</p>
+          </div>
+          <ButtonLink href={LINKS.whatsapp} variant="secondary" openInNewTab onClick={onWhatsAppClick}>
+            Falar no WhatsApp
+          </ButtonLink>
+        </div>
+      </section>
+
+      <section className="mx-auto mt-10 max-w-6xl px-4 pb-24 md:px-6 md:pb-28">
+        <footer className="rounded-3xl border border-zinc-200 bg-white p-6 text-center text-xs text-zinc-500 shadow-sm">
+          <div className="font-semibold text-zinc-800">TetelPontocom</div>
+          <div className="mt-2">
+            Este site não é afiliado, patrocinado ou administrado pela Shopee. As ofertas e curadorias são organizadas
+            de forma independente pela TetelPontocom usando recursos públicos da plataforma.
+          </div>
+          <div className="mt-3">© {new Date().getFullYear()} TetelPontocom. Todos os direitos reservados.</div>
+        </footer>
+      </section>
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-zinc-200 bg-white/95 backdrop-blur md:hidden">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+          <ButtonLink href={LINKS.shopeeMain} variant="primary" className="w-full">
+            Ir para a Shopee agora →
+          </ButtonLink>
+        </div>
+      </div>
+    </main>
+  )
+}
